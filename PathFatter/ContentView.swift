@@ -4,6 +4,8 @@ import AppKit
 struct ContentView: View {
     @EnvironmentObject private var mappingStore: PathMappingStore
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     @State private var inputPath = ""
     @State private var outputPath = ""
@@ -24,8 +26,16 @@ struct ContentView: View {
     @State private var historyWorkItem: DispatchWorkItem?
     @State private var pendingBrowserOpenFinder = false
     @State private var pendingBrowserCopyOutput = false
+    @State private var showConversionFlash = false
+    @State private var cardScale: CGFloat = 1.0
+    @State private var backgroundOrbOffset: CGSize = .zero
 
     @FocusState private var isInputFocused: Bool
+    @FocusState private var isOutputFocused: Bool
+
+    @State private var hoveredHistoryItem: UUID?
+    @State private var selectedHistoryItem: UUID?
+    @State private var historySearchQuery = ""
 
     private enum InputKind {
         case empty
@@ -47,38 +57,27 @@ struct ContentView: View {
 
     private var sourceTitle: String {
         switch inputKind {
-        case .empty:
-            return "Input Path"
-        case .windows:
-            return "Windows Path"
-        case .sharePoint:
-            return "SharePoint URL"
-        case .mac:
-            return "macOS Path"
+        case .empty: return "Input Path"
+        case .windows: return "Windows Path"
+        case .sharePoint: return "SharePoint URL"
+        case .mac: return "macOS Path"
         }
     }
 
     private var targetTitle: String {
         switch inputKind {
-        case .empty:
-            return "Output Path"
-        case .windows, .sharePoint:
-            return "macOS Path"
-        case .mac:
-            return "Windows Path"
+        case .empty: return "Output Path"
+        case .windows, .sharePoint: return "macOS Path"
+        case .mac: return "Windows Path"
         }
     }
 
     private var directionLabel: String {
         switch inputKind {
-        case .empty:
-            return "Ready"
-        case .windows:
-            return "Windows to macOS"
-        case .sharePoint:
-            return "SharePoint to macOS"
-        case .mac:
-            return "macOS to Windows"
+        case .empty: return "Ready"
+        case .windows: return "Windows → macOS"
+        case .sharePoint: return "SharePoint → macOS"
+        case .mac: return "macOS → Windows"
         }
     }
 
@@ -89,7 +88,7 @@ struct ContentView: View {
             }
             return trimmedInput.isEmpty ? "Paste a path to convert" : "No conversion available"
         }
-        return "Ready"
+        return "Conversion complete"
     }
 
     private var canOpenOutputInFinder: Bool {
@@ -97,11 +96,76 @@ struct ContentView: View {
         return trimmed.hasPrefix("/") || trimmed.lowercased().hasPrefix("smb://")
     }
 
+    // MARK: - Dynamic Accent Color (Time-Based)
+
+    var dynamicAccentColor: Color {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 6..<12:
+            return Color(red: 0.45, green: 0.72, blue: 0.98)  // Warm morning blue
+        case 12..<18:
+            return Color(red: 0.22, green: 0.56, blue: 0.94)  // Standard blue
+        case 18..<24:
+            return Color(red: 0.35, green: 0.52, blue: 0.95)  // Evening purple-blue
+        default:
+            return Color(red: 0.28, green: 0.42, blue: 0.88)  // Night indigo
+        }
+    }
+
+    var accentGlowColor: Color {
+        dynamicAccentColor.opacity(colorScheme == .dark ? 0.24 : 0.15)
+    }
+
+    // MARK: - Color Scheme Aware Colors
+
+    var backgroundGradientColors: [Color] {
+        if colorScheme == .dark {
+            return [
+                Color(red: 0.06, green: 0.08, blue: 0.12),
+                Color(red: 0.04, green: 0.06, blue: 0.10)
+            ]
+        } else {
+            return [
+                Color(red: 0.97, green: 0.98, blue: 0.995),
+                Color(red: 0.94, green: 0.96, blue: 0.99)
+            ]
+        }
+    }
+
+    var cardBackgroundColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.03)
+    }
+
+    var cardBorderColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.10)
+    }
+
+    var cardInnerShadowColor: Color {
+        colorScheme == .dark ? Color.black.opacity(0.3) : Color.black.opacity(0.05)
+    }
+
+    var fieldBackgroundColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04)
+    }
+
+    var fieldBorderColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.12)
+    }
+
+    var activeFieldBorderColor: Color {
+        dynamicAccentColor.opacity(colorScheme == .dark ? 0.5 : 0.4)
+    }
+
+    var secondaryTextColor: Color {
+        colorScheme == .dark ? Color.secondary : Color(white: 0.45)
+    }
+
     var body: some View {
         GeometryReader { proxy in
-            let profile = LayoutProfile(size: proxy.size)
+            let profile = LayoutProfile(size: proxy.size, dynamicTypeSize: dynamicTypeSize)
 
             ZStack {
+                // Animated background with gradient orbs
                 backgroundLayer
                     .ignoresSafeArea()
 
@@ -137,6 +201,7 @@ struct ContentView: View {
         .onAppear {
             refreshConversionContext()
             recomputeOutput(animated: false)
+            startBackgroundAnimation()
         }
         .onChange(of: inputPath) { _ in
             recomputeOutput(animated: true)
@@ -169,10 +234,7 @@ struct ContentView: View {
         .onKeyPress("c", modifiers: .command) {
             if !outputPath.isEmpty {
                 copyToPasteboard(outputPath)
-                didCopy = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
-                    self?.didCopy = false
-                }
+                triggerCopySuccess()
                 return .handled
             }
             return .ignored
@@ -186,7 +248,7 @@ struct ContentView: View {
         }
         .onKeyPress("s", modifiers: .command) {
             if !outputPath.isEmpty {
-                withAnimation(.easeInOut(duration: 0.18)) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     inputPath = outputPath
                 }
                 return .handled
@@ -200,18 +262,44 @@ struct ContentView: View {
             }
             return .ignored
         }
+        .onKeyPress(.downArrow) {
+            navigateHistory(direction: 1)
+            return .handled
+        }
+        .onKeyPress(.upArrow) {
+            navigateHistory(direction: -1)
+            return .handled
+        }
+        .onKeyPress(.return) {
+            if let selected = selectedHistoryItem,
+               let item = mappingStore.history.first(where: { $0.id == selected }) {
+                copyToPasteboard(item.output)
+                triggerCopySuccess()
+            }
+            return .handled
+        }
     }
-}
 
-private extension ContentView {
-    func refreshConversionContext() {
+    // MARK: - Background Animation
+
+    private func startBackgroundAnimation() {
+        guard !reduceMotion else { return }
+
+        withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
+            backgroundOrbOffset = CGSize(width: 100, height: 100)
+        }
+    }
+
+    // MARK: - Conversion Logic
+
+    private func refreshConversionContext() {
         conversionContext = PathConverter.makeContext(
             mappings: mappingStore.mappings,
             sharePointMappings: mappingStore.sharePointMappings
         )
     }
 
-    func recomputeOutput(animated: Bool) {
+    private func recomputeOutput(animated: Bool) {
         let converted = PathConverter.convert(inputPath, context: conversionContext)
         if converted != outputPath {
             if animated {
@@ -221,12 +309,53 @@ private extension ContentView {
             } else {
                 outputPath = converted
             }
+
+            // Trigger conversion flash animation
+            if !converted.isEmpty && animated {
+                triggerConversionFlash()
+            }
         }
 
         handlePendingBrowserActions(using: converted)
     }
 
-    func handlePendingBrowserActions(using converted: String) {
+    private func triggerConversionFlash() {
+        guard !reduceMotion else { return }
+
+        withAnimation(.easeInOut(duration: 0.4)) {
+            showConversionFlash = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showConversionFlash = false
+            }
+        }
+    }
+
+    private func triggerCopySuccess() {
+        guard !reduceMotion else {
+            didCopy = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
+                self?.didCopy = false
+            }
+            return
+        }
+
+        didCopy = true
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+            cardScale = 1.05
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                cardScale = 1.0
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
+            self?.didCopy = false
+        }
+    }
+
+    private func handlePendingBrowserActions(using converted: String) {
         guard pendingBrowserOpenFinder || pendingBrowserCopyOutput else { return }
 
         let trimmed = converted.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -243,10 +372,7 @@ private extension ContentView {
         if pendingBrowserCopyOutput {
             copyToPasteboard(trimmed)
             didCopyPath = true
-            didCopy = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
-                self?.didCopy = false
-            }
+            triggerCopySuccess()
         }
 
         if pendingBrowserOpenFinder {
@@ -270,14 +396,13 @@ private extension ContentView {
         }
     }
 
-    func scheduleHistoryCommit() {
+    private func scheduleHistoryCommit() {
         historyWorkItem?.cancel()
 
         let currentInput = inputPath
         let currentOutput = outputPath
         guard !currentOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
-        // Capture only what we need to avoid retain cycles
         let work = DispatchWorkItem { [currentInput, currentOutput, weak mappingStore] in
             guard let mappingStore else { return }
             mappingStore.recordHistory(input: currentInput, output: currentOutput)
@@ -287,12 +412,12 @@ private extension ContentView {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
 
-    func openConvertedPath() {
+    private func openConvertedPath() {
         guard canOpenOutputInFinder else { return }
         openPathInFinder(outputPath)
     }
 
-    func openPathInFinder(_ path: String) {
+    private func openPathInFinder(_ path: String) {
         let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
@@ -306,30 +431,26 @@ private extension ContentView {
 
         let fileURL = URL(fileURLWithPath: trimmed)
         let fileManager = FileManager.default
-        
-        // Try to get attributes for better error handling
+
         do {
             let attrs = try fileManager.attributesOfItem(atPath: fileURL.path)
             let isDirectory = attrs[.type] as? FileAttributeType == .typeDirectory
-            
+
             if isDirectory {
                 NSWorkspace.shared.open(fileURL)
             } else {
                 NSWorkspace.shared.activateFileViewerSelecting([fileURL])
             }
-            return
         } catch {
-            // Path doesn't exist or no permissions - try parent
             if let existingParent = nearestExistingParent(for: fileURL) {
                 NSWorkspace.shared.open(existingParent)
             } else {
-                // Show error to user
                 mappingStore.browserIntegrationLastEvent = "Path not found: \(trimmed)"
             }
         }
     }
 
-    func nearestExistingParent(for url: URL) -> URL? {
+    private func nearestExistingParent(for url: URL) -> URL? {
         var candidate = url
         let fileManager = FileManager.default
 
@@ -343,70 +464,54 @@ private extension ContentView {
         return nil
     }
 
-    func copyToPasteboard(_ value: String) {
+    private func copyToPasteboard(_ value: String) {
         guard !value.isEmpty else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(value, forType: .string)
     }
 
-    // MARK: - Color Scheme Aware Colors
+    private func navigateHistory(direction: Int) {
+        guard !mappingStore.history.isEmpty else { return }
 
-    var backgroundGradientColors: [Color] {
-        if colorScheme == .dark {
-            return [
-                Color(red: 0.08, green: 0.10, blue: 0.14),
-                Color(red: 0.05, green: 0.07, blue: 0.11)
-            ]
+        let filteredHistory = filteredHistoryItems
+        guard !filteredHistory.isEmpty else { return }
+
+        if let currentIndex = filteredHistory.firstIndex(where: { $0.id == selectedHistoryItem }) {
+            let newIndex = currentIndex + direction
+            if newIndex >= 0 && newIndex < filteredHistory.count {
+                selectedHistoryItem = filteredHistory[newIndex].id
+            }
         } else {
-            return [
-                Color(red: 0.96, green: 0.97, blue: 0.99),
-                Color(red: 0.93, green: 0.95, blue: 0.98)
-            ]
+            selectedHistoryItem = direction > 0 ? filteredHistory.first?.id : filteredHistory.last?.id
         }
     }
 
-    var accentGlowColor: Color {
-        if colorScheme == .dark {
-            return Color(red: 0.32, green: 0.55, blue: 0.96).opacity(0.24)
-        } else {
-            return Color(red: 0.22, green: 0.56, blue: 0.94).opacity(0.15)
+    private var filteredHistoryItems: [HistoryItem] {
+        if historySearchQuery.isEmpty {
+            return mappingStore.history
+        }
+        let query = historySearchQuery.lowercased()
+        return mappingStore.history.filter {
+            $0.input.lowercased().contains(query) || $0.output.lowercased().contains(query)
         }
     }
+}
 
-    var cardBackgroundColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.03) : Color.black.opacity(0.04)
-    }
+// MARK: - Background Layer
 
-    var cardBorderColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.12)
-    }
-
-    var fieldBackgroundColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
-    }
-
-    var fieldBorderColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.15)
-    }
-
-    var activeFieldBorderColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.32) : Color.black.opacity(0.25)
-    }
-
-    var secondaryTextColor: Color {
-        colorScheme == .dark ? Color.secondary : Color(white: 0.45)
-    }
-
+private extension ContentView {
     var backgroundLayer: some View {
         ZStack {
             VisualEffectView(material: .fullScreenUI, blendingMode: .behindWindow)
 
+            // Base gradient
             LinearGradient(
                 colors: backgroundGradientColors,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
 
+            // Animated gradient orb 1 (top trailing)
             RadialGradient(
                 colors: [
                     accentGlowColor,
@@ -416,48 +521,82 @@ private extension ContentView {
                 startRadius: 24,
                 endRadius: 540
             )
+            .offset(backgroundOrbOffset)
             .blur(radius: 24)
 
+            // Animated gradient orb 2 (bottom leading)
+            RadialGradient(
+                colors: [
+                    dynamicAccentColor.opacity(colorScheme == .dark ? 0.15 : 0.08),
+                    Color.clear
+                ],
+                center: .bottomLeading,
+                startRadius: 24,
+                endRadius: 400
+            )
+            .offset(CGSize(width: -backgroundOrbOffset.width * 0.5, height: -backgroundOrbOffset.height * 0.5))
+            .blur(radius: 32)
+
+            // Subtle noise/gradient overlay
             LinearGradient(
                 colors: [
-                    Color.white.opacity(colorScheme == .dark ? 0.10 : 0.40),
+                    Color.white.opacity(colorScheme == .dark ? 0.08 : 0.4),
                     Color.clear,
-                    Color.black.opacity(colorScheme == .dark ? 0.14 : 0.05)
+                    Color.black.opacity(colorScheme == .dark ? 0.12 : 0.04)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
         }
     }
+}
 
+// MARK: - Header
+
+private extension ContentView {
     func header(profile: LayoutProfile) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 14) {
+                // App icon with gradient and glow
                 ZStack {
                     Circle()
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 0.52, green: 0.76, blue: 1.00),
-                                    Color(red: 0.24, green: 0.57, blue: 0.96)
+                                    dynamicAccentColor.opacity(0.9),
+                                    dynamicAccentColor
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 38, height: 38)
-                        .shadow(color: Color(red: 0.25, green: 0.60, blue: 0.95).opacity(0.35), radius: 14, x: 0, y: 6)
+                        .frame(width: 44, height: 44)
+                        .shadow(color: dynamicAccentColor.opacity(0.4), radius: 16, x: 0, y: 8)
 
                     Image(systemName: "arrow.left.arrow.right")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                 }
+                .scaleEffect(isHoveringHistory ? 1.05 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHoveringHistory)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("PathFatter")
-                        .font(.system(size: profile.titleSize, weight: .semibold))
+                        .font(.system(size: profile.titleSize, weight: .bold, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    dynamicAccentColor,
+                                    dynamicAccentColor.opacity(0.7)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .tracking(-0.5)
+
                     Text("Instantly translate Windows and macOS paths")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13.5, weight: .medium))
                         .foregroundStyle(secondaryTextColor)
                         .lineLimit(1)
                 }
@@ -476,21 +615,25 @@ private extension ContentView {
     }
 
     var controlsRow: some View {
-        HStack(spacing: 8) {
-            SoftTag(text: directionLabel)
+        HStack(spacing: 10) {
+            SoftTag(text: directionLabel, accentColor: dynamicAccentColor)
 
             Button {
-                withAnimation(.easeInOut(duration: 0.18)) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                     isHistoryVisible.toggle()
                 }
             } label: {
                 Label("History", systemImage: "clock.arrow.circlepath")
             }
-            .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringHistory, isActive: isHistoryVisible))
+            .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringHistory, isActive: isHistoryVisible, accentColor: dynamicAccentColor))
             .onHover { isHoveringHistory = $0 }
         }
     }
+}
 
+// MARK: - Cards
+
+private extension ContentView {
     @ViewBuilder
     func cards(profile: LayoutProfile) -> some View {
         if profile.isCompact {
@@ -507,23 +650,30 @@ private extension ContentView {
     }
 
     func inputCard(profile: LayoutProfile) -> some View {
-        FrostedCard(backgroundColor: cardBackgroundColor, borderColor: cardBorderColor) {
-            VStack(alignment: .leading, spacing: 12) {
+        EnhancedFrostedCard(
+            backgroundColor: cardBackgroundColor,
+            borderColor: cardBorderColor,
+            innerShadowColor: cardInnerShadowColor,
+            accentColor: dynamicAccentColor,
+            isHovering: isHoveringPaste || isHoveringClear,
+            scale: cardScale
+        ) {
+            VStack(alignment: .leading, spacing: 14) {
                 Text(sourceTitle)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(secondaryTextColor)
 
-                FrostedField(
+                FloatingLabelField(
+                    text: $inputPath,
+                    placeholder: "Paste a Windows or SharePoint path…",
                     isActive: isInputFocused,
+                    accentColor: dynamicAccentColor,
                     backgroundColor: fieldBackgroundColor,
-                    borderColor: isInputFocused ? activeFieldBorderColor : fieldBorderColor
-                ) {
-                    PathInputEditor(
-                        text: $inputPath,
-                        height: profile.inputEditorHeight,
-                        isFocused: $isInputFocused
-                    )
-                }
+                    borderColor: isInputFocused ? activeFieldBorderColor : fieldBorderColor,
+                    height: profile.inputEditorHeight,
+                    isFocused: $isInputFocused,
+                    showSyntaxHighlighting: false
+                )
 
                 HStack(spacing: 8) {
                     Button {
@@ -533,21 +683,23 @@ private extension ContentView {
                     } label: {
                         Label("Paste", systemImage: "doc.on.clipboard")
                     }
-                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringPaste))
+                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringPaste, accentColor: dynamicAccentColor))
                     .onHover { isHoveringPaste = $0 }
 
                     Button {
-                        inputPath = ""
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            inputPath = ""
+                        }
                     } label: {
                         Label("Clear", systemImage: "xmark.circle")
                     }
-                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringClear))
+                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringClear, accentColor: dynamicAccentColor))
                     .onHover { isHoveringClear = $0 }
 
                     Spacer()
 
                     Text("⌘V to paste")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundStyle(secondaryTextColor)
                 }
             }
@@ -555,8 +707,16 @@ private extension ContentView {
     }
 
     func outputCard(profile: LayoutProfile) -> some View {
-        FrostedCard(backgroundColor: cardBackgroundColor, borderColor: cardBorderColor) {
-            VStack(alignment: .leading, spacing: 12) {
+        EnhancedFrostedCard(
+            backgroundColor: cardBackgroundColor,
+            borderColor: cardBorderColor,
+            innerShadowColor: cardInnerShadowColor,
+            accentColor: dynamicAccentColor,
+            isHovering: isHoveringCopy || isHoveringOpen || isHoveringSwap,
+            scale: cardScale,
+            showFlash: showConversionFlash
+        ) {
+            VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text(targetTitle)
                         .font(.system(size: 15, weight: .semibold))
@@ -566,58 +726,70 @@ private extension ContentView {
 
                     Button {
                         if !outputPath.isEmpty {
-                            inputPath = outputPath
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                inputPath = outputPath
+                            }
                         }
                     } label: {
                         Label("Swap", systemImage: "arrow.left.arrow.right")
                     }
-                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringSwap, isDisabled: outputPath.isEmpty))
+                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringSwap, isDisabled: outputPath.isEmpty, accentColor: dynamicAccentColor))
                     .disabled(outputPath.isEmpty)
                     .onHover { isHoveringSwap = $0 }
                 }
 
-                FrostedField(
-                    isActive: false,
+                FloatingLabelField(
+                    text: .constant(outputPath),
+                    placeholder: "Converted path appears here…",
+                    isActive: isOutputFocused,
+                    accentColor: dynamicAccentColor,
                     backgroundColor: fieldBackgroundColor,
-                    borderColor: fieldBorderColor
-                ) {
-                    PathOutputField(
-                        text: outputPath,
-                        height: profile.outputEditorHeight
-                    )
-                }
+                    borderColor: fieldBorderColor,
+                    height: profile.outputEditorHeight,
+                    isFocused: $isOutputFocused,
+                    showSyntaxHighlighting: true,
+                    isReadOnly: true
+                )
 
                 HStack(spacing: 8) {
                     Button {
                         guard !outputPath.isEmpty else { return }
                         copyToPasteboard(outputPath)
-                        didCopy = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
-                            self?.didCopy = false
-                        }
+                        triggerCopySuccess()
                     } label: {
-                        Label(didCopy ? "Copied" : "Copy", systemImage: didCopy ? "checkmark.circle.fill" : "doc.on.doc")
+                        HStack(spacing: 6) {
+                            Image(systemName: didCopy ? "checkmark.circle.fill" : "doc.on.doc")
+                            Text(didCopy ? "Copied" : "Copy")
+                        }
                     }
-                    .buttonStyle(GlowPrimaryButtonStyle(isHovering: isHoveringCopy, isDisabled: outputPath.isEmpty))
+                    .buttonStyle(GlowPrimaryButtonStyle(isHovering: isHoveringCopy, isDisabled: outputPath.isEmpty, accentColor: dynamicAccentColor))
                     .disabled(outputPath.isEmpty)
                     .onHover { isHoveringCopy = $0 }
 
                     Button {
                         openConvertedPath()
                     } label: {
-                        Label("Open in Finder", systemImage: "folder")
+                        Label("Open", systemImage: "folder")
                     }
-                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringOpen, isDisabled: !canOpenOutputInFinder))
+                    .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringOpen, isDisabled: !canOpenOutputInFinder, accentColor: dynamicAccentColor))
                     .disabled(!canOpenOutputInFinder)
                     .onHover { isHoveringOpen = $0 }
 
                     Spacer()
                 }
 
-                Text(statusText)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(secondaryTextColor)
-                    .lineLimit(1)
+                HStack {
+                    Image(systemName: showConversionFlash ? "checkmark.circle.fill" : "info.circle")
+                        .foregroundStyle(showConversionFlash ? .green : secondaryTextColor)
+                        .scaleEffect(showConversionFlash ? 1.2 : 1.0)
+                        .animation(.spring(response: 0.2, dampingFraction: 0.6), value: showConversionFlash)
+
+                    Text(statusText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(showConversionFlash ? .green : secondaryTextColor)
+                        .lineLimit(1)
+                        .animation(.easeInOut(duration: 0.2), value: showConversionFlash)
+                }
             }
         }
     }
@@ -626,14 +798,25 @@ private extension ContentView {
         HStack {
             Spacer()
             Text("Settings ⌘,")
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .foregroundStyle(secondaryTextColor)
         }
     }
+}
 
+// MARK: - History Card
+
+private extension ContentView {
     func historyCard(maxHeight: CGFloat) -> some View {
-        FrostedCard(backgroundColor: cardBackgroundColor, borderColor: cardBorderColor) {
-            VStack(alignment: .leading, spacing: 10) {
+        EnhancedFrostedCard(
+            backgroundColor: cardBackgroundColor,
+            borderColor: cardBorderColor,
+            innerShadowColor: cardInnerShadowColor,
+            accentColor: dynamicAccentColor,
+            isHovering: isHoveringHistoryPanel,
+            scale: 1.0
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Label("History", systemImage: "clock.arrow.circlepath")
                         .font(.system(size: 14, weight: .semibold))
@@ -641,7 +824,7 @@ private extension ContentView {
                     Spacer()
 
                     Button {
-                        withAnimation(.easeInOut(duration: 0.18)) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             isHistoryVisible = false
                         }
                     } label: {
@@ -650,25 +833,70 @@ private extension ContentView {
                     .buttonStyle(.borderless)
                 }
 
-                if mappingStore.history.isEmpty {
-                    Text("No recent conversions yet.")
-                        .font(.system(size: 12, weight: .medium))
+                // Search field
+                HStack {
+                    Image(systemName: "magnifyingglass")
                         .foregroundStyle(secondaryTextColor)
+                        .font(.system(size: 11))
+
+                    TextField("Search history…", text: $historySearchQuery)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12))
+
+                    if !historySearchQuery.isEmpty {
+                        Button {
+                            historySearchQuery = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(secondaryTextColor)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(fieldBackgroundColor)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(fieldBorderColor, lineWidth: 1)
+                )
+
+                if filteredHistoryItems.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "clock.badge.exclamationmark")
+                            .font(.system(size: 32))
+                            .foregroundStyle(secondaryTextColor)
+
+                        Text(historySearchQuery.isEmpty ? "No recent conversions yet." : "No matches found.")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(secondaryTextColor)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 8) {
-                            ForEach(mappingStore.history) { item in
+                        LazyVStack(spacing: 6) {
+                            ForEach(filteredHistoryItems) { item in
                                 HistoryRow(
                                     item: item,
-                                    onCopy: { copyToPasteboard(item.output) },
-                                    onOpen: { openPathInFinder(item.output) }
+                                    isSelected: selectedHistoryItem == item.id,
+                                    isHovered: hoveredHistoryItem == item.id,
+                                    onHover: { hoveredHistoryItem = $0 ? item.id : nil },
+                                    onSelect: { selectedHistoryItem = item.id },
+                                    onCopy: {
+                                        copyToPasteboard(item.output)
+                                        triggerCopySuccess()
+                                    },
+                                    onOpen: { openPathInFinder(item.output) },
+                                    accentColor: dynamicAccentColor,
+                                    colorScheme: colorScheme
                                 )
-
-                                if item.id != mappingStore.history.last?.id {
-                                    Divider().overlay(Color.white.opacity(colorScheme == .dark ? 0.07 : 0.15))
-                                }
                             }
                         }
+                        .padding(.vertical, 4)
                     }
                     .frame(minHeight: min(160, maxHeight), maxHeight: maxHeight)
                 }
@@ -678,8 +906,11 @@ private extension ContentView {
     }
 }
 
+// MARK: - Layout Profile
+
 private struct LayoutProfile {
     let size: CGSize
+    let dynamicTypeSize: DynamicTypeSize
 
     var isShort: Bool { size.height < 700 }
     var isVeryShort: Bool { size.height < 500 }
@@ -690,14 +921,12 @@ private struct LayoutProfile {
 
     var outerPadding: CGFloat {
         if isDense { return 12 }
-        let base = max(12, min(24, size.width * 0.025))
-        return isVeryShort ? max(10, base - 2) : base
+        return min(24, size.width * 0.025)
     }
 
     var gap: CGFloat {
         if isDense { return 10 }
-        let base = max(10, min(16, size.width * 0.014))
-        return isVeryShort ? max(8, base - 2) : base
+        return min(16, size.width * 0.014)
     }
 
     var historyWidth: CGFloat {
@@ -717,75 +946,265 @@ private struct LayoutProfile {
     }
 
     var inputEditorHeight: CGFloat {
-        if isDense { return 72 }
-        if isVeryShort { return 68 }
-        return 88
+        if isDense { return 76 }
+        if isVeryShort { return 72 }
+        return 92
     }
 
     var outputEditorHeight: CGFloat {
-        if isDense { return 66 }
-        if isVeryShort { return 62 }
-        return 82
+        if isDense { return 70 }
+        if isVeryShort { return 66 }
+        return 86
     }
 
     var titleSize: CGFloat {
-        if isVeryShort { return 26 }
-        if isDense { return 30 }
-        return 38
+        if isVeryShort { return 28 }
+        if isDense { return 32 }
+        return 42
     }
 }
 
-private struct PathInputEditor: View {
+// MARK: - Enhanced Components
+
+private struct EnhancedFrostedCard<Content: View>: View {
+    let content: Content
+    var backgroundColor: Color
+    var borderColor: Color
+    var innerShadowColor: Color
+    var accentColor: Color
+    var isHovering: Bool
+    var scale: CGFloat
+    var showFlash: Bool = false
+
+    init(
+        backgroundColor: Color,
+        borderColor: Color,
+        innerShadowColor: Color,
+        accentColor: Color,
+        isHovering: Bool,
+        scale: CGFloat = 1.0,
+        showFlash: Bool = false,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.content = content()
+        self.backgroundColor = backgroundColor
+        self.borderColor = borderColor
+        self.innerShadowColor = innerShadowColor
+        self.accentColor = accentColor
+        self.isHovering = isHovering
+        self.scale = scale
+        self.showFlash = showFlash
+    }
+
+    var body: some View {
+        content
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                Group {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    backgroundColor.opacity(0.8),
+                                    backgroundColor.opacity(0.4)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .background(
+                            VisualEffectView(material: .sidebar, blendingMode: .withinWindow)
+                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            borderColor.opacity(0.5),
+                                            borderColor
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.2
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            innerShadowColor.opacity(0.2),
+                                            Color.clear
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .blur(radius: 2)
+                        )
+                        .overlay(
+                            Group {
+                                if showFlash {
+                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                        .stroke(accentColor.opacity(0.6), lineWidth: 2)
+                                        .shadow(color: accentColor.opacity(0.4), radius: 12)
+                                }
+                            }
+                        )
+                }
+            )
+            .shadow(color: accentColor.opacity(isHovering ? 0.2 : 0.1), radius: isHovering ? 24 : 16, x: 0, y: 12)
+            .scaleEffect(scale)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: scale)
+            .animation(.easeInOut(duration: 0.2), value: isHovering)
+    }
+}
+
+private struct FloatingLabelField: View {
     @Binding var text: String
+    var placeholder: String
+    var isActive: Bool
+    var accentColor: Color
+    var backgroundColor: Color
+    var borderColor: Color
     var height: CGFloat
     var isFocused: FocusState<Bool>.Binding
+    var showSyntaxHighlighting: Bool
+    var isReadOnly: Bool = false
+
+    private var isFloating: Bool {
+        !text.isEmpty || isActive
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
+            if showSyntaxHighlighting && !text.isEmpty {
+                SyntaxHighlightedPathText(path: text, height: height, accentColor: accentColor)
+            }
+
             TextEditor(text: $text)
                 .font(.system(size: 14, weight: .regular, design: .monospaced))
                 .foregroundStyle(.primary)
                 .focused(isFocused)
                 .scrollContentBackground(.hidden)
-                .padding(.leading, -4)
-                .padding(.top, -3)
+                .padding(.top, isFloating ? 14 : 2)
+                .padding(.leading, 4)
                 .frame(minHeight: height, maxHeight: height)
+                .disabled(isReadOnly)
 
-            if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text("Paste a path…")
-                    .font(.system(size: 14, weight: .regular, design: .monospaced))
-                    .foregroundStyle(.secondary.opacity(0.8))
-                    .padding(.top, 6)
-                    .padding(.leading, 2)
-                    .allowsHitTesting(false)
+            Text(placeholder)
+                .font(.system(size: isActive ? 11 : 14, weight: isActive ? .medium : .regular, design: .monospaced))
+                .foregroundStyle(isActive ? accentColor.opacity(0.8) : .secondary.opacity(0.7))
+                .padding(.top, isFloating ? 2 : 6)
+                .padding(.leading, 6)
+                .allowsHitTesting(false)
+                .offset(y: isFloating ? -4 : 0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isFloating)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(backgroundColor)
+                .background(
+                    VisualEffectView(material: .menu, blendingMode: .withinWindow)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(borderColor, lineWidth: 1.2)
+        )
+        .shadow(color: accentColor.opacity(isActive ? 0.25 : 0.05), radius: isActive ? 16 : 8, x: 0, y: 8)
+        .animation(.easeInOut(duration: 0.15), value: isActive)
+    }
+}
+
+private struct SyntaxHighlightedPathText: View {
+    var path: String
+    var height: CGFloat
+    var accentColor: Color
+
+    var body: some View {
+        ScrollView {
+            highlightedText
+                .font(.system(size: 14, weight: .regular, design: .monospaced))
+                .padding(.top, 2)
+                .padding(.leading, 4)
+                .frame(minHeight: height, maxHeight: height)
+                .allowsHitTesting(false)
+        }
+    }
+
+    @ViewBuilder
+    private var highlightedText: some View {
+        if path.hasPrefix("smb://") {
+            // SMB path highlighting
+            let components = path.split(separator: "/", maxSplits: 3, omittingEmptySubsequences: true)
+            if components.count >= 3 {
+                Text("smb://")
+                    .foregroundStyle(Color.secondary)
+                + Text(String(components[1]))
+                    .foregroundStyle(accentColor)
+                + Text("/")
+                    .foregroundStyle(Color.secondary)
+                + Text(components.count > 2 ? String(components[2]) : "")
+                    .foregroundStyle(Color.primary)
+            } else {
+                Text(path)
+                    .foregroundStyle(Color.primary)
+            }
+        } else if path.hasPrefix("/") {
+            // macOS path
+            let components = path.split(separator: "/")
+            if !components.isEmpty {
+                Text("/")
+                    .foregroundStyle(Color.secondary)
+                + Text(components.first.map(String.init) ?? "")
+                    .foregroundStyle(accentColor)
+                + Text(components.dropFirst().prefix(2).map { "/" + $0 }.joined())
+                    .foregroundStyle(Color.primary)
+                if components.count > 3 {
+                    Text("…")
+                        .foregroundStyle(Color.secondary)
+                }
+            }
+        } else {
+            // Windows path
+            if path.count >= 2 && path[path.startIndex].isASCII && path[path.index(after: path.startIndex)] == ":" {
+                let drive = String(path.prefix(2))
+                let remainder = String(path.dropFirst(2))
+                Text(drive)
+                    .foregroundStyle(accentColor)
+                + Text(remainder.prefix(30))
+                    .foregroundStyle(Color.primary)
+                if remainder.count > 30 {
+                    Text("…")
+                        .foregroundStyle(Color.secondary)
+                }
+            } else {
+                Text(path)
+                    .foregroundStyle(Color.primary)
             }
         }
     }
 }
 
-private struct PathOutputField: View {
-    var text: String
-    var height: CGFloat
-
-    var body: some View {
-        ScrollView {
-            Text(text.isEmpty ? "—" : text)
-                .font(.system(size: 14, weight: .regular, design: .monospaced))
-                .foregroundStyle(text.isEmpty ? .secondary : .primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
-                .padding(.vertical, 1)
-        }
-        .frame(minHeight: height, maxHeight: height)
-    }
-}
-
 private struct HistoryRow: View {
     var item: HistoryItem
+    var isSelected: Bool
+    var isHovered: Bool
+    var onHover: (Bool) -> Void
+    var onSelect: () -> Void
     var onCopy: () -> Void
     var onOpen: () -> Void
+    var accentColor: Color
+    var colorScheme: ColorScheme
 
-    @State private var isHoveringAction = false
+    @State private var actionHover = false
 
     private var compactLabel: String {
         let trimmed = item.output.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -815,146 +1234,122 @@ private struct HistoryRow: View {
         return "\(parts[parts.count - 2]) / \(parts[parts.count - 1])"
     }
 
-    private var actionIcon: String {
-        item.canOpen ? "folder" : "doc.on.doc"
-    }
-
-    private var actionHint: String {
-        item.canOpen ? "Open in Finder" : "Copy path"
-    }
-
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
+            // Icon based on path type
+            Image(systemName: iconForPath(item.output))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isSelected ? .white : accentColor)
+                .frame(width: 24, height: 24)
+                .background(
+                    Circle()
+                        .fill(isSelected ? accentColor : accentColor.opacity(0.15))
+                )
+
             Text(compactLabel)
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .lineLimit(1)
                 .truncationMode(.middle)
+                .foregroundStyle(isSelected ? .white : (colorScheme == .dark ? Color.primary : Color(white: 0.2)))
 
             Spacer(minLength: 8)
 
-            Button {
-                if item.canOpen {
-                    onOpen()
-                } else {
-                    onCopy()
+            if isHovered || isSelected {
+                HStack(spacing: 6) {
+                    Button {
+                        onCopy()
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                    }
+                    .buttonStyle(HistoryActionButtonStyle(isHovering: actionHover, accentColor: accentColor))
+                    .onHover { actionHover = $0 }
+                    .help("Copy path")
+
+                    if item.canOpen {
+                        Button {
+                            onOpen()
+                        } label: {
+                            Image(systemName: "folder")
+                        }
+                        .buttonStyle(HistoryActionButtonStyle(isHovering: actionHover, accentColor: accentColor))
+                        .help("Open in Finder")
+                    }
                 }
-            } label: {
-                Image(systemName: actionIcon)
+                .transition(.opacity.combined(with: .scale))
             }
-            .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringAction))
-            .onHover { isHoveringAction = $0 }
-            .help(actionHint)
         }
-    }
-}
-
-private struct FrostedCard<Content: View>: View {
-    let content: Content
-    var backgroundColor: Color
-    var borderColor: Color
-
-    init(backgroundColor: Color, borderColor: Color, @ViewBuilder content: () -> Content) {
-        self.content = content()
-        self.backgroundColor = backgroundColor
-        self.borderColor = borderColor
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            content
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(backgroundColor)
-                .background(
-                    VisualEffectView(material: .sidebar, blendingMode: .withinWindow)
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(borderColor, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    isSelected ? accentColor :
+                    isHovered ? accentColor.opacity(0.12) : Color.clear
                 )
         )
+        .onHover { onHover($0) }
+        .onTapGesture { onSelect() }
+        .animation(.easeInOut(duration: 0.15), value: isHovered)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
+    }
+
+    private func iconForPath(_ path: String) -> String {
+        if path.lowercased().hasPrefix("smb://") {
+            return "network"
+        } else if path.hasPrefix("/") {
+            return "folder"
+        } else {
+            return "externaldrive"
+        }
     }
 }
 
-private struct FrostedField<Content: View>: View {
-    var isActive: Bool
-    let content: Content
-    var backgroundColor: Color
-    var borderColor: Color
+private struct HistoryActionButtonStyle: ButtonStyle {
+    var isHovering: Bool
+    var accentColor: Color
 
-    init(isActive: Bool, backgroundColor: Color, borderColor: Color, @ViewBuilder content: () -> Content) {
-        self.isActive = isActive
-        self.content = content()
-        self.backgroundColor = backgroundColor
-        self.borderColor = borderColor
-    }
-
-    var body: some View {
-        content
-            .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(backgroundColor)
-                    .background(
-                        VisualEffectView(material: .menu, blendingMode: .withinWindow)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(borderColor, lineWidth: 1)
-            )
-            .shadow(color: Color(red: 0.28, green: 0.58, blue: 0.94).opacity(isActive ? 0.20 : 0.05), radius: isActive ? 14 : 6, x: 0, y: 6)
-            .animation(.easeInOut(duration: 0.15), value: isActive)
-    }
-}
-
-private struct SoftTag: View {
-    var text: String
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 11.5, weight: .semibold))
-            .foregroundStyle(.white.opacity(0.88))
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(isHovering ? .white : accentColor)
+            .padding(.horizontal, 8)
             .padding(.vertical, 5)
-            .padding(.horizontal, 10)
             .background(
                 Capsule()
-                    .fill(Color.white.opacity(0.12))
-                    .background(
-                        VisualEffectView(material: .menu, blendingMode: .withinWindow)
-                            .clipShape(Capsule())
-                    )
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.white.opacity(0.22), lineWidth: 1)
-                    )
+                    .fill(isHovering ? accentColor : accentColor.opacity(0.15))
             )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
+
+// MARK: - Button Styles
 
 private struct GlowPrimaryButtonStyle: ButtonStyle {
     var isHovering: Bool
     var isDisabled: Bool
+    var accentColor: Color
+
+    init(isHovering: Bool = false, isDisabled: Bool = false, accentColor: Color = .blue) {
+        self.isHovering = isHovering
+        self.isDisabled = isDisabled
+        self.accentColor = accentColor
+    }
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
         return configuration.label
             .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(isDisabled ? Color.white.opacity(0.55) : Color.white)
-            .padding(.vertical, 9)
-            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 20)
             .background(
                 Capsule()
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.40, green: 0.74, blue: 1.00),
-                                Color(red: 0.22, green: 0.56, blue: 0.94)
+                                accentColor.opacity(0.9),
+                                accentColor
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -963,47 +1358,97 @@ private struct GlowPrimaryButtonStyle: ButtonStyle {
                     )
                     .overlay(
                         Capsule()
-                            .stroke(Color.white.opacity(isDisabled ? 0.12 : 0.5), lineWidth: 1)
+                            .stroke(Color.white.opacity(isDisabled ? 0.12 : 0.4), lineWidth: 1)
                     )
             )
-            .shadow(color: Color(red: 0.32, green: 0.66, blue: 0.98).opacity(isDisabled ? 0 : (isHovering ? 0.48 : 0.28)), radius: isHovering ? 18 : 12, x: 0, y: 8)
-            .scaleEffect(pressed ? 0.98 : (isHovering && !isDisabled ? 1.01 : 1.0))
+            .shadow(color: accentColor.opacity(isDisabled ? 0 : (isHovering ? 0.5 : 0.3)), radius: isHovering ? 20 : 14, x: 0, y: 10)
+            .scaleEffect(pressed ? 0.97 : (isHovering && !isDisabled ? 1.02 : 1.0))
             .opacity(isDisabled ? 0.5 : 1)
-            .animation(.easeOut(duration: 0.12), value: pressed)
-            .animation(.easeOut(duration: 0.16), value: isHovering)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: pressed)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovering)
     }
 }
 
 private struct QuietPillButtonStyle: ButtonStyle {
     var isHovering: Bool
-    var isActive: Bool = false
-    var isDisabled: Bool = false
+    var isActive: Bool
+    var isDisabled: Bool
+    var accentColor: Color
+
+    init(isHovering: Bool = false, isActive: Bool = false, isDisabled: Bool = false, accentColor: Color = .blue) {
+        self.isHovering = isHovering
+        self.isActive = isActive
+        self.isDisabled = isDisabled
+        self.accentColor = accentColor
+    }
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
         return configuration.label
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(isDisabled ? Color.white.opacity(0.45) : Color.white.opacity(0.9))
-            .padding(.vertical, 7)
-            .padding(.horizontal, 14)
+            .foregroundStyle(isDisabled ? Color.white.opacity(0.45) : (isActive ? .white : Color.white.opacity(0.9)))
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
             .background(
                 Capsule()
-                    .fill(Color.white.opacity(isDisabled ? 0.05 : (isActive ? 0.22 : (isHovering ? 0.18 : 0.11))))
+                    .fill(
+                        isActive ? accentColor :
+                        isDisabled ? Color.white.opacity(0.05) :
+                        isHovering ? accentColor.opacity(0.2) :
+                        Color.white.opacity(0.1)
+                    )
                     .background(
                         VisualEffectView(material: .menu, blendingMode: .withinWindow)
                             .clipShape(Capsule())
                     )
                     .overlay(
                         Capsule()
-                            .stroke(Color.white.opacity(isDisabled ? 0.08 : 0.20), lineWidth: 1)
+                            .stroke(isActive ? Color.clear : Color.white.opacity(isDisabled ? 0.08 : 0.18), lineWidth: 1)
                     )
             )
-            .scaleEffect(pressed ? 0.985 : (isHovering && !isDisabled ? 1.015 : 1.0))
+            .scaleEffect(pressed ? 0.98 : (isHovering && !isDisabled ? 1.03 : 1.0))
             .opacity(isDisabled ? 0.45 : 1.0)
-            .animation(.easeOut(duration: 0.11), value: pressed)
-            .animation(.easeOut(duration: 0.14), value: isHovering)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: pressed)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovering)
     }
 }
+
+private struct SoftTag: View {
+    var text: String
+    var accentColor: Color
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+            .foregroundStyle(.white.opacity(0.9))
+            .padding(.vertical, 5)
+            .padding(.horizontal, 11)
+            .background(
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                accentColor.opacity(0.9),
+                                accentColor
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .background(
+                        VisualEffectView(material: .menu, blendingMode: .withinWindow)
+                            .clipShape(Capsule())
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                    )
+            )
+            .shadow(color: accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
+    }
+}
+
+// MARK: - Helper Views
 
 private struct VisualEffectView: NSViewRepresentable {
     var material: NSVisualEffectView.Material
