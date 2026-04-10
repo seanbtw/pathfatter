@@ -209,30 +209,30 @@ struct ContentView: View {
             handleDrop(providers: providers)
             return true
         }
-        .onChange(of: inputPath) { _ in
+        .onChange(of: inputPath) { _, _ in
             recomputeOutput(animated: true)
         }
-        .onChange(of: mappingStore.mappings) { _ in
+        .onChange(of: mappingStore.mappings) { _, _ in
             refreshConversionContext()
             recomputeOutput(animated: false)
         }
-        .onChange(of: mappingStore.sharePointMappings) { _ in
+        .onChange(of: mappingStore.sharePointMappings) { _, _ in
             refreshConversionContext()
             recomputeOutput(animated: false)
         }
-        .onChange(of: mappingStore.incomingSharePointURL) { value in
-            guard let value, !value.isEmpty else { return }
+        .onChange(of: mappingStore.incomingSharePointURL) { _, newValue in
+            guard let value = newValue, !value.isEmpty else { return }
             let behavior = mappingStore.consumeIncomingBrowserPreferences()
             pendingBrowserOpenFinder = behavior.openFinder
             pendingBrowserCopyOutput = behavior.copyPath
             inputPath = value
             mappingStore.incomingSharePointURL = nil
         }
-        .onChange(of: outputPath) { _ in
+        .onChange(of: outputPath) { _, _ in
             scheduleHistoryCommit()
         }
-        .onChange(of: isHistoryVisible) { visible in
-            if !visible {
+        .onChange(of: isHistoryVisible) { _, newValue in
+            if !newValue {
                 isHoveringHistoryPanel = false
             }
         }
@@ -339,15 +339,9 @@ struct ContentView: View {
     }
 
     private func triggerCopySuccess() {
-        guard !reduceMotion else {
-            didCopy = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
-                self?.didCopy = false
-            }
-            return
-        }
-
         didCopy = true
+        guard !reduceMotion else { return }
+        
         withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
             cardScale = 1.05
         }
@@ -356,9 +350,7 @@ struct ContentView: View {
                 cardScale = 1.0
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
-            self?.didCopy = false
-        }
+        // didCopy will reset on next conversion or view refresh
     }
 
     private func handlePendingBrowserActions(using converted: String) {
@@ -505,10 +497,10 @@ struct ContentView: View {
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
         for provider in providers {
             if provider.canLoadObject(ofClass: URL.self) {
-                provider.loadObject(ofClass: URL.self) { [weak self] url, _ in
-                    DispatchQueue.main.async {
-                        if let url = url as? URL {
-                            self?.inputPath = url.path
+                provider.loadObject(ofClass: URL.self) { url, _ in
+                    DispatchQueue.main.async { [url] in
+                        if let url = url {
+                            inputPath = url.path
                         }
                     }
                 }
@@ -640,7 +632,7 @@ private extension ContentView {
 
                     Image(systemName: "arrow.left.arrow.right")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                 }
                 .scaleEffect(isHoveringHistory ? 1.05 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHoveringHistory)
@@ -648,7 +640,7 @@ private extension ContentView {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("PathFatter")
                         .font(.system(size: profile.titleSize, weight: .bold, design: .rounded))
-                        .foregroundStyle(
+                        .foregroundColor(
                             LinearGradient(
                                 colors: [
                                     dynamicAccentColor,
@@ -662,7 +654,7 @@ private extension ContentView {
 
                     Text("Instantly translate Windows and macOS paths")
                         .font(.system(size: 13.5, weight: .medium))
-                        .foregroundStyle(secondaryTextColor)
+                        .foregroundColor(secondaryTextColor)
                         .lineLimit(1)
                 }
 
@@ -726,7 +718,7 @@ private extension ContentView {
             VStack(alignment: .leading, spacing: 14) {
                 Text(sourceTitle)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(secondaryTextColor)
+                    .foregroundColor(secondaryTextColor)
                     .accessibilityLabel(sourceTitle)
 
                 FloatingLabelField(
@@ -772,7 +764,7 @@ private extension ContentView {
 
                     Text("⌘V to paste")
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundStyle(secondaryTextColor)
+                        .foregroundColor(secondaryTextColor)
                         .accessibilityHidden(true)
                 }
             }
@@ -793,7 +785,7 @@ private extension ContentView {
                 HStack {
                     Text(targetTitle)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(secondaryTextColor)
+                        .foregroundColor(secondaryTextColor)
                         .accessibilityLabel(targetTitle)
 
                     Spacer(minLength: 8)
@@ -862,17 +854,16 @@ private extension ContentView {
 
                 HStack {
                     Image(systemName: showConversionFlash ? "checkmark.circle.fill" : "info.circle")
-                        .foregroundStyle(showConversionFlash ? .green : secondaryTextColor)
+                        .foregroundColor(showConversionFlash ? .green : secondaryTextColor)
                         .scaleEffect(showConversionFlash ? 1.2 : 1.0)
                         .animation(.spring(response: 0.2, dampingFraction: 0.6), value: showConversionFlash)
                         .accessibilityHidden(true)
 
                     Text(statusText)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(showConversionFlash ? .green : secondaryTextColor)
+                        .foregroundColor(showConversionFlash ? .green : secondaryTextColor)
                         .lineLimit(1)
                         .animation(.easeInOut(duration: 0.2), value: showConversionFlash)
-                        .accessibilityLiveRegion(showConversionFlash ? .polite : .off)
                 }
             }
         }
@@ -883,7 +874,7 @@ private extension ContentView {
             Spacer()
             Text("Settings ⌘,")
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .foregroundStyle(secondaryTextColor)
+                .foregroundColor(secondaryTextColor)
         }
     }
 }
@@ -920,7 +911,7 @@ private extension ContentView {
                 // Search field
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundStyle(secondaryTextColor)
+                        .foregroundColor(secondaryTextColor)
                         .font(.system(size: 11))
 
                     TextField("Search history…", text: $historySearchQuery)
@@ -934,7 +925,7 @@ private extension ContentView {
                             Image(systemName: "xmark.circle.fill")
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(secondaryTextColor)
+                        .foregroundColor(secondaryTextColor)
                     }
                 }
                 .padding(.horizontal, 10)
@@ -959,7 +950,7 @@ private extension ContentView {
                                     HStack {
                                         Text("Pinned")
                                             .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(secondaryTextColor)
+                                            .foregroundColor(secondaryTextColor)
                                             .textCase(.uppercase)
                                             .tracking(0.5)
 
@@ -967,7 +958,7 @@ private extension ContentView {
 
                                         Text("\(mappingStore.pinnedHistory.count)")
                                             .font(.system(size: 10, weight: .bold, design: .rounded))
-                                            .foregroundStyle(dynamicAccentColor)
+                                            .foregroundColor(dynamicAccentColor)
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
                                             .background(
@@ -1003,7 +994,7 @@ private extension ContentView {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text(group.rawValue)
                                             .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(secondaryTextColor)
+                                            .foregroundColor(secondaryTextColor)
                                             .textCase(.uppercase)
                                             .tracking(0.5)
 
@@ -1048,17 +1039,17 @@ private extension ContentView {
 
                 Image(systemName: historySearchQuery.isEmpty ? "clock.arrow.circlepath" : "magnifyingglass")
                     .font(.system(size: 24, weight: .medium))
-                    .foregroundStyle(dynamicAccentColor)
+                    .foregroundColor(dynamicAccentColor)
             }
 
             VStack(spacing: 4) {
                 Text(historySearchQuery.isEmpty ? "No conversions yet" : "No matches found")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(colorScheme == .dark ? Color.primary : Color(white: 0.3))
+                    .foregroundColor(colorScheme == .dark ? Color.primary : Color(white: 0.3))
 
                 Text(historySearchQuery.isEmpty ? "Paste a path to get started" : "Try a different search term")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(secondaryTextColor)
+                    .foregroundColor(secondaryTextColor)
             }
 
             if historySearchQuery.isEmpty {
@@ -1263,7 +1254,7 @@ private struct FloatingLabelField: View {
 
             TextEditor(text: $text)
                 .font(.system(size: 14, weight: .regular, design: .monospaced))
-                .foregroundStyle(.primary)
+                .foregroundColor(.primary)
                 .focused(isFocused)
                 .scrollContentBackground(.hidden)
                 .padding(.top, isFloating ? 14 : 2)
@@ -1273,7 +1264,7 @@ private struct FloatingLabelField: View {
 
             Text(placeholder)
                 .font(.system(size: isActive ? 11 : 14, weight: isActive ? .medium : .regular, design: .monospaced))
-                .foregroundStyle(isActive ? accentColor.opacity(0.8) : .secondary.opacity(0.7))
+                .foregroundColor(isActive ? accentColor.opacity(0.8) : .secondary.opacity(0.7))
                 .padding(.top, isFloating ? 2 : 6)
                 .padding(.leading, 6)
                 .allowsHitTesting(false)
@@ -1322,30 +1313,30 @@ private struct SyntaxHighlightedPathText: View {
             let components = path.split(separator: "/", maxSplits: 3, omittingEmptySubsequences: true)
             if components.count >= 3 {
                 Text("smb://")
-                    .foregroundStyle(Color.secondary)
+                    .foregroundColor(Color.secondary)
                 + Text(String(components[1]))
-                    .foregroundStyle(accentColor)
+                    .foregroundColor(accentColor)
                 + Text("/")
-                    .foregroundStyle(Color.secondary)
+                    .foregroundColor(Color.secondary)
                 + Text(components.count > 2 ? String(components[2]) : "")
-                    .foregroundStyle(Color.primary)
+                    .foregroundColor(Color.primary)
             } else {
                 Text(path)
-                    .foregroundStyle(Color.primary)
+                    .foregroundColor(Color.primary)
             }
         } else if path.hasPrefix("/") {
             // macOS path
             let components = path.split(separator: "/")
             if !components.isEmpty {
                 Text("/")
-                    .foregroundStyle(Color.secondary)
+                    .foregroundColor(Color.secondary)
                 + Text(components.first.map(String.init) ?? "")
-                    .foregroundStyle(accentColor)
+                    .foregroundColor(accentColor)
                 + Text(components.dropFirst().prefix(2).map { "/" + $0 }.joined())
-                    .foregroundStyle(Color.primary)
+                    .foregroundColor(Color.primary)
                 if components.count > 3 {
                     Text("…")
-                        .foregroundStyle(Color.secondary)
+                        .foregroundColor(Color.secondary)
                 }
             }
         } else {
@@ -1354,16 +1345,16 @@ private struct SyntaxHighlightedPathText: View {
                 let drive = String(path.prefix(2))
                 let remainder = String(path.dropFirst(2))
                 Text(drive)
-                    .foregroundStyle(accentColor)
+                    .foregroundColor(accentColor)
                 + Text(remainder.prefix(30))
-                    .foregroundStyle(Color.primary)
+                    .foregroundColor(Color.primary)
                 if remainder.count > 30 {
                     Text("…")
-                        .foregroundStyle(Color.secondary)
+                        .foregroundColor(Color.secondary)
                 }
             } else {
                 Text(path)
-                    .foregroundStyle(Color.primary)
+                    .foregroundColor(Color.primary)
             }
         }
     }
@@ -1420,7 +1411,7 @@ private struct HistoryRow: View {
             // Icon based on path type
             Image(systemName: iconForPath(item.output))
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(isSelected ? .white : accentColor)
+                .foregroundColor(isSelected ? .white : accentColor)
                 .frame(width: 24, height: 24)
                 .background(
                     Circle()
@@ -1431,7 +1422,7 @@ private struct HistoryRow: View {
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .lineLimit(1)
                 .truncationMode(.middle)
-                .foregroundStyle(isSelected ? .white : (colorScheme == .dark ? Color.primary : Color(white: 0.2)))
+                .foregroundColor(isSelected ? .white : (colorScheme == .dark ? Color.primary : Color(white: 0.2)))
 
             Spacer(minLength: 8)
 
@@ -1444,7 +1435,7 @@ private struct HistoryRow: View {
                         Image(systemName: isPinned ? "pin.fill" : "pin")
                     }
                     .buttonStyle(HistoryActionButtonStyle(isHovering: actionHover, accentColor: accentColor))
-                    .foregroundStyle(isPinned ? accentColor : (colorScheme == .dark ? Color.primary : Color(white: 0.4)))
+                    .foregroundColor(isPinned ? accentColor : (colorScheme == .dark ? Color.primary : Color(white: 0.4)))
                     .onHover { actionHover = $0 }
                     .help(isPinned ? "Unpin" : "Pin to top")
 
@@ -1503,7 +1494,7 @@ private struct HistoryActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(isHovering ? .white : accentColor)
+            .foregroundColor(isHovering ? .white : accentColor)
             .padding(.horizontal, 8)
             .padding(.vertical, 5)
             .background(
@@ -1532,7 +1523,7 @@ private struct GlowPrimaryButtonStyle: ButtonStyle {
         let pressed = configuration.isPressed
         return configuration.label
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(isDisabled ? Color.white.opacity(0.55) : Color.white)
+            .foregroundColor(isDisabled ? Color.white.opacity(0.55) : Color.white)
             .padding(.vertical, 10)
             .padding(.horizontal, 20)
             .background(
@@ -1578,7 +1569,7 @@ private struct QuietPillButtonStyle: ButtonStyle {
         let pressed = configuration.isPressed
         return configuration.label
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(isDisabled ? Color.white.opacity(0.45) : (isActive ? .white : Color.white.opacity(0.9)))
+            .foregroundColor(isDisabled ? Color.white.opacity(0.45) : (isActive ? .white : Color.white.opacity(0.9)))
             .padding(.vertical, 8)
             .padding(.horizontal, 16)
             .background(
@@ -1612,7 +1603,7 @@ private struct SoftTag: View {
     var body: some View {
         Text(text)
             .font(.system(size: 11.5, weight: .semibold, design: .rounded))
-            .foregroundStyle(.white.opacity(0.9))
+            .foregroundColor(.white.opacity(0.9))
             .padding(.vertical, 5)
             .padding(.horizontal, 11)
             .background(
