@@ -167,6 +167,7 @@ struct ContentView: View {
             ZStack {
                 // Animated background with gradient orbs
                 backgroundLayer
+                    .accessibilityHidden(true)
                     .ignoresSafeArea()
 
                 ScrollView(.vertical, showsIndicators: true) {
@@ -726,6 +727,7 @@ private extension ContentView {
                 Text(sourceTitle)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(secondaryTextColor)
+                    .accessibilityLabel(sourceTitle)
 
                 FloatingLabelField(
                     text: $inputPath,
@@ -738,6 +740,8 @@ private extension ContentView {
                     isFocused: $isInputFocused,
                     showSyntaxHighlighting: false
                 )
+                .accessibilityLabel("Input path")
+                .accessibilityHint("Paste or type a Windows or SharePoint path to convert")
 
                 HStack(spacing: 8) {
                     Button {
@@ -749,6 +753,8 @@ private extension ContentView {
                     }
                     .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringPaste, accentColor: dynamicAccentColor))
                     .onHover { isHoveringPaste = $0 }
+                    .accessibilityLabel("Paste from clipboard")
+                    .accessibilityHint("Command V")
 
                     Button {
                         withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
@@ -759,12 +765,15 @@ private extension ContentView {
                     }
                     .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringClear, accentColor: dynamicAccentColor))
                     .onHover { isHoveringClear = $0 }
+                    .accessibilityLabel("Clear input")
+                    .accessibilityHint("Escape")
 
                     Spacer()
 
                     Text("⌘V to paste")
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundStyle(secondaryTextColor)
+                        .accessibilityHidden(true)
                 }
             }
         }
@@ -785,6 +794,7 @@ private extension ContentView {
                     Text(targetTitle)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(secondaryTextColor)
+                        .accessibilityLabel(targetTitle)
 
                     Spacer(minLength: 8)
 
@@ -800,6 +810,8 @@ private extension ContentView {
                     .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringSwap, isDisabled: outputPath.isEmpty, accentColor: dynamicAccentColor))
                     .disabled(outputPath.isEmpty)
                     .onHover { isHoveringSwap = $0 }
+                    .accessibilityLabel("Swap input and output")
+                    .accessibilityHint("Command S")
                 }
 
                 FloatingLabelField(
@@ -814,6 +826,8 @@ private extension ContentView {
                     showSyntaxHighlighting: true,
                     isReadOnly: true
                 )
+                .accessibilityLabel("Output path")
+                .accessibilityHint(outputPath.isEmpty ? "Converted path will appear here" : "Converted \(inputKind == .mac ? "Windows" : "macOS") path")
 
                 HStack(spacing: 8) {
                     Button {
@@ -829,6 +843,8 @@ private extension ContentView {
                     .buttonStyle(GlowPrimaryButtonStyle(isHovering: isHoveringCopy, isDisabled: outputPath.isEmpty, accentColor: dynamicAccentColor))
                     .disabled(outputPath.isEmpty)
                     .onHover { isHoveringCopy = $0 }
+                    .accessibilityLabel(didCopy ? "Copied to clipboard" : "Copy to clipboard")
+                    .accessibilityHint("Command C")
 
                     Button {
                         openConvertedPath()
@@ -838,6 +854,8 @@ private extension ContentView {
                     .buttonStyle(QuietPillButtonStyle(isHovering: isHoveringOpen, isDisabled: !canOpenOutputInFinder, accentColor: dynamicAccentColor))
                     .disabled(!canOpenOutputInFinder)
                     .onHover { isHoveringOpen = $0 }
+                    .accessibilityLabel("Open in Finder")
+                    .accessibilityHint("Command O")
 
                     Spacer()
                 }
@@ -847,12 +865,14 @@ private extension ContentView {
                         .foregroundStyle(showConversionFlash ? .green : secondaryTextColor)
                         .scaleEffect(showConversionFlash ? 1.2 : 1.0)
                         .animation(.spring(response: 0.2, dampingFraction: 0.6), value: showConversionFlash)
+                        .accessibilityHidden(true)
 
                     Text(statusText)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(showConversionFlash ? .green : secondaryTextColor)
                         .lineLimit(1)
                         .animation(.easeInOut(duration: 0.2), value: showConversionFlash)
+                        .accessibilityLiveRegion(showConversionFlash ? .polite : .off)
                 }
             }
         }
