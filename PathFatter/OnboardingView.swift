@@ -75,33 +75,39 @@ struct OnboardingView: View {
                     .padding(.top, 20)
                 }
 
-                // Content
-                TabView(selection: $currentPage) {
-                    ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
-                        OnboardingPageView(page: page)
-                            .tag(index)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .frame(height: 380)
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            dragOffset = value.translation
-                        }
-                        .onEnded { value in
-                            if value.translation.width > 100 && currentPage > 0 {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                    currentPage -= 1
-                                }
-                            } else if value.translation.width < -100 && currentPage < pages.count - 1 {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                    currentPage += 1
-                                }
+                // Content with custom carousel
+                GeometryReader { geo in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 0) {
+                            ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
+                                OnboardingPageView(page: page)
+                                    .frame(width: geo.size.width)
+                                    .tag(index)
                             }
-                            dragOffset = .zero
                         }
-                )
+                        .offset(x: dragOffset.width - CGFloat(currentPage) * geo.size.width)
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    dragOffset = value.translation
+                                }
+                                .onEnded { value in
+                                    if value.translation.width > 100 && currentPage > 0 {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            currentPage -= 1
+                                        }
+                                    } else if value.translation.width < -100 && currentPage < pages.count - 1 {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            currentPage += 1
+                                        }
+                                    }
+                                    dragOffset = .zero
+                                }
+                        )
+                    }
+                    .frame(height: 380)
+                    .disabled(false)
+                }
 
                 // Page indicator and next button
                 HStack {
