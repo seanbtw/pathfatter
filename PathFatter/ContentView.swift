@@ -203,6 +203,11 @@ struct ContentView: View {
             recomputeOutput(animated: false)
             startBackgroundAnimation()
         }
+        // Drag and drop support
+        .onDrop(of: [.fileURL, .URL], isTargeted: nil) { providers in
+            handleDrop(providers: providers)
+            return true
+        }
         .onChange(of: inputPath) { _ in
             recomputeOutput(animated: true)
         }
@@ -494,6 +499,65 @@ struct ContentView: View {
         return mappingStore.history.filter {
             $0.input.lowercased().contains(query) || $0.output.lowercased().contains(query)
         }
+    }
+
+    private func handleDrop(providers: [NSItemProvider]) -> Bool {
+        for provider in providers {
+            if provider.canLoadObject(ofClass: URL.self) {
+                provider.loadObject(ofClass: URL.self) { [weak self] url, _ in
+                    DispatchQueue.main.async {
+                        if let url = url as? URL {
+                            self?.inputPath = url.path
+                        }
+                    }
+                }
+                return true
+            }
+        }
+        return false
+    }
+
+    // MARK: - History Grouping
+
+    enum HistoryGroup: String, CaseIterable {
+        case today = "Today"
+        case yesterday = "Yesterday"
+        case thisWeek = "This Week"
+        case older = "Older"
+
+        static func group(for date: Date) -> HistoryGroup {
+            let calendar = Calendar.current
+            let now = Date()
+
+            if calendar.isDateInToday(date) {
+                return .today
+            } else if calendar.isDateInYesterday(date) {
+                return .yesterday
+            } else if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
+                return .thisWeek
+            } else {
+                return .older
+            }
+        }
+    }
+
+    private var groupedHistory: [HistoryGroup: [HistoryItem]] {
+        var groups: [HistoryGroup: [HistoryItem]] = [:]
+        
+        // First, add pinned items to a special "Pinned" section (we'll handle this separately)
+        // Then group remaining items by date
+        let nonPinnedItems = filteredHistoryItems.filter { !mappingStore.pinnedHistoryIds.contains($0.id) }
+        
+        for item in nonPinnedItems {
+            let group = HistoryGroup.group(for: item.timestamp)
+            groups[group, default: []].append(item)
+        }
+        
+        return groups
+    }
+
+    private var hasPinnedItems: Bool {
+        !mappingStore.pinnedHistory.isEmpty
     }
 }
 
@@ -865,35 +929,84 @@ private extension ContentView {
                 )
 
                 if filteredHistoryItems.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "clock.badge.exclamationmark")
-                            .font(.system(size: 32))
-                            .foregroundStyle(secondaryTextColor)
-
-                        Text(historySearchQuery.isEmpty ? "No recent conversions yet." : "No matches found.")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(secondaryTextColor)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 24)
+                    emptyHistoryView
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 6) {
-                            ForEach(filteredHistoryItems) { item in
-                                HistoryRow(
-                                    item: item,
-                                    isSelected: selectedHistoryItem == item.id,
-                                    isHovered: hoveredHistoryItem == item.id,
-                                    onHover: { hoveredHistoryItem = $0 ? item.id : nil },
-                                    onSelect: { selectedHistoryItem = item.id },
-                                    onCopy: {
-                                        copyToPasteboard(item.output)
-                                        triggerCopySuccess()
-                                    },
-                                    onOpen: { openPathInFinder(item.output) },
-                                    accentColor: dynamicAccentColor,
-                                    colorScheme: colorScheme
-                                )
+                        LazyVStack(alignment: .leading, spacing: 16) {
+                            // Pinned items section
+                            if hasPinnedItems {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text("Pinned")
+                                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                            .foregroundStyle(secondaryTextColor)
+                                            .textCase(.uppercase)
+                                            .tracking(0.5)
+
+                                        Spacer()
+
+                                        Text("\(mappingStore.pinnedHistory.count)")
+                                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            .foregroundStyle(dynamicAccentColor)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(
+                                                Capsule()
+                                                    .fill(dynamicAccentColor.opacity(0.15))
+                                            )
+                                    }
+
+                                    LazyVStack(spacing: 6) {
+                                        ForEach(mappingStore.pinnedHistory) { item in
+                                            HistoryRow(
+                                                item: item,
+                                                isSelected: selectedHistoryItem == item.id,
+                                                isHovered: hoveredHistoryItem == item.id,
+                                                onHover: { hoveredHistoryItem = $0 ? item.id : nil },
+                                                onSelect: { selectedHistoryItem = item.id },
+                                                onCopy: {
+                                                    copyToPasteboard(item.output)
+                                                    triggerCopySuccess()
+                                                },
+                                                onOpen: { openPathInFinder(item.output) },
+                                                accentColor: dynamicAccentColor,
+                                                colorScheme: colorScheme
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Date-grouped items
+                            ForEach(HistoryGroup.allCases, id: \.self) { group in
+                                if let items = groupedHistory[group], !items.isEmpty {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(group.rawValue)
+                                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                            .foregroundStyle(secondaryTextColor)
+                                            .textCase(.uppercase)
+                                            .tracking(0.5)
+
+                                        LazyVStack(spacing: 6) {
+                                            ForEach(items) { item in
+                                                HistoryRow(
+                                                    item: item,
+                                                    isSelected: selectedHistoryItem == item.id,
+                                                    isHovered: hoveredHistoryItem == item.id,
+                                                    onHover: { hoveredHistoryItem = $0 ? item.id : nil },
+                                                    onSelect: { selectedHistoryItem = item.id },
+                                                    onCopy: {
+                                                        copyToPasteboard(item.output)
+                                                        triggerCopySuccess()
+                                                    },
+                                                    onOpen: { openPathInFinder(item.output) },
+                                                    accentColor: dynamicAccentColor,
+                                                    colorScheme: colorScheme
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                         .padding(.vertical, 4)
@@ -903,6 +1016,49 @@ private extension ContentView {
             }
         }
         .onHover { isHoveringHistoryPanel = $0 }
+    }
+
+    @ViewBuilder
+    private var emptyHistoryView: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(dynamicAccentColor.opacity(0.1))
+                    .frame(width: 56, height: 56)
+
+                Image(systemName: historySearchQuery.isEmpty ? "clock.arrow.circlepath" : "magnifyingglass")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(dynamicAccentColor)
+            }
+
+            VStack(spacing: 4) {
+                Text(historySearchQuery.isEmpty ? "No conversions yet" : "No matches found")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(colorScheme == .dark ? Color.primary : Color(white: 0.3))
+
+                Text(historySearchQuery.isEmpty ? "Paste a path to get started" : "Try a different search term")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(secondaryTextColor)
+            }
+
+            if historySearchQuery.isEmpty {
+                Button {
+                    if let pasted = NSPasteboard.general.string(forType: .string) {
+                        inputPath = pasted
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "doc.on.clipboard")
+                        Text("Paste from Clipboard")
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                }
+                .buttonStyle(GlowPrimaryButtonStyle(isHovering: false, isDisabled: false, accentColor: dynamicAccentColor))
+                .padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
     }
 }
 
@@ -1194,6 +1350,7 @@ private struct SyntaxHighlightedPathText: View {
 }
 
 private struct HistoryRow: View {
+    @EnvironmentObject private var mappingStore: PathMappingStore
     var item: HistoryItem
     var isSelected: Bool
     var isHovered: Bool
@@ -1205,6 +1362,10 @@ private struct HistoryRow: View {
     var colorScheme: ColorScheme
 
     @State private var actionHover = false
+
+    private var isPinned: Bool {
+        mappingStore.pinnedHistoryIds.contains(item.id)
+    }
 
     private var compactLabel: String {
         let trimmed = item.output.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1254,8 +1415,19 @@ private struct HistoryRow: View {
 
             Spacer(minLength: 8)
 
-            if isHovered || isSelected {
+            if isHovered || isSelected || isPinned {
                 HStack(spacing: 6) {
+                    // Pin button
+                    Button {
+                        mappingStore.togglePinned(item.id)
+                    } label: {
+                        Image(systemName: isPinned ? "pin.fill" : "pin")
+                    }
+                    .buttonStyle(HistoryActionButtonStyle(isHovering: actionHover, accentColor: accentColor))
+                    .foregroundStyle(isPinned ? accentColor : (colorScheme == .dark ? Color.primary : Color(white: 0.4)))
+                    .onHover { actionHover = $0 }
+                    .help(isPinned ? "Unpin" : "Pin to top")
+
                     Button {
                         onCopy()
                     } label: {

@@ -47,8 +47,13 @@ final class PathMappingStore: ObservableObject {
         didSet { scheduleHistorySave() }
     }
 
+    @Published var pinnedHistoryIds: Set<UUID> {
+        didSet { schedulePinnedSave() }
+    }
+
     private var incomingBrowserOpenFinderOverride: Bool?
     private var incomingBrowserCopyOverride: Bool?
+    private var pinnedSaveWorkItem: DispatchWorkItem?
 
     // Debounced save work items
     private var saveWorkItem: DispatchWorkItem?
@@ -62,6 +67,7 @@ final class PathMappingStore: ObservableObject {
     private static let browserAutoOpenFinderKey = "PathFatter.BrowserAutoOpenFinder"
     private static let browserAutoCopyPathKey = "PathFatter.BrowserAutoCopyConvertedPath"
     private static let historyStorageKey = "PathFatter.History"
+    private static let pinnedStorageKey = "PathFatter.PinnedHistory"
 
     init() {
         self.mappings = Self.load()
@@ -70,6 +76,7 @@ final class PathMappingStore: ObservableObject {
         self.browserAutoOpenFinder = Self.loadBrowserAutoOpenFinder()
         self.browserAutoCopyConvertedPath = Self.loadBrowserAutoCopyConvertedPath()
         self.history = Self.loadHistory()
+        self.pinnedHistoryIds = Self.loadPinnedHistory()
     }
 
     // MARK: - Debounced Saves (Thread-Safe)
@@ -129,6 +136,44 @@ final class PathMappingStore: ObservableObject {
     private func performHistorySave(with historySnapshot: [HistoryItem]) {
         guard let data = try? JSONEncoder().encode(historySnapshot) else { return }
         UserDefaults.standard.set(data, forKey: Self.historyStorageKey)
+    }
+
+    private func schedulePinnedSave() {
+        pinnedSaveWorkItem?.cancel()
+
+        let pinnedSnapshot = pinnedHistoryIds
+
+        let work = DispatchWorkItem { [pinnedSnapshot] in
+            self.performPinnedSave(with: pinnedSnapshot)
+        }
+
+        pinnedSaveWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+    }
+
+    private func performPinnedSave(with pinnedSnapshot: Set<UUID>) {
+        guard let data = try? JSONEncoder().encode(Array(pinnedSnapshot)) else { return }
+        UserDefaults.standard.set(data, forKey: Self.pinnedStorageKey)
+    }
+
+    private static func loadPinnedHistory() -> Set<UUID> {
+        guard let data = UserDefaults.standard.data(forKey: pinnedStorageKey),
+              let ids = try? JSONDecoder().decode([UUID].self, from: data) else {
+            return []
+        }
+        return Set(ids)
+    }
+
+    func togglePinned(_ itemId: UUID) {
+        if pinnedHistoryIds.contains(itemId) {
+            pinnedHistoryIds.remove(itemId)
+        } else {
+            pinnedHistoryIds.insert(itemId)
+        }
+    }
+
+    var pinnedHistory: [HistoryItem] {
+        history.filter { pinnedHistoryIds.contains($0.id) }
     }
 
     // MARK: - Browser Integration Saves (immediate, low frequency)
