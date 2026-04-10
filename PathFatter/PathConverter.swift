@@ -120,7 +120,7 @@ struct PathConverter {
 
         if input.hasPrefix("\\\\") || input.hasPrefix("//") {
             let prefixRemoved = input.hasPrefix("\\\\") ? String(input.dropFirst(2)) : String(input.dropFirst(2))
-            let parts = prefixRemoved.split(separator: CharacterSet(charactersIn: "\\/"), omittingEmptySubsequences: true)
+            let parts = prefixRemoved.split(separator: /[\\\/]/, omittingEmptySubsequences: true)
             if parts.count >= 2 {
                 let server = parts[0]
                 let share = parts[1]
