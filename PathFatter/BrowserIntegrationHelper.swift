@@ -11,15 +11,26 @@ enum BrowserExtensionStatus {
     var message: String {
         switch self {
         case .unknown:
-            return "Not checked yet."
+            return "Click 'Check Status' to verify."
         case .enabled:
-            return "Safari extension is enabled."
+            return "✓ Extension is active and ready."
         case .disabled:
-            return "Safari extension is installed but disabled."
+            return "⚠️ Extension is disabled. Enable it in Safari settings."
         case .unavailable:
-            return "Safari extension was not found."
+            return "❌ Extension not found. Build and run PathFatterSafariWebExtension."
         case .error(let text):
-            return text
+            return "Error: \(text)"
+        }
+    }
+    
+    var actionHint: String {
+        switch self {
+        case .disabled:
+            return "Open Safari Preferences → Extensions"
+        case .unavailable:
+            return "Build the Safari extension scheme in Xcode"
+        default:
+            return ""
         }
     }
 }

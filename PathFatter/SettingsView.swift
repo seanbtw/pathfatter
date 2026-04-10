@@ -155,6 +155,13 @@ private extension SettingsView {
                         .font(.system(size: 12.5, weight: .medium))
                         .foregroundStyle(secondaryTextColor)
                 }
+                
+                if !extensionStatus.actionHint.isEmpty {
+                    Text(extensionStatus.actionHint)
+                        .font(.system(size: 11.5, weight: .medium, design: .monospaced))
+                        .foregroundStyle(secondaryTextColor)
+                        .padding(.leading, 28)
+                }
 
                 if let event = mappingStore.browserIntegrationLastEvent, !event.isEmpty {
                     Text("Last event: \(event)")
@@ -601,35 +608,69 @@ private struct DriveMappingRow: View {
     @Binding var mapping: PathMapping
     var onRemove: () -> Void
 
+    private var isValidWindows: Bool {
+        PathMappingStore.isValidWindowsPrefix(mapping.windowsPrefix)
+    }
+
+    private var isValidMac: Bool {
+        PathMappingStore.isValidMacPrefix(mapping.macPrefix)
+    }
+
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 12) {
-                TextField("A:", text: $mapping.windowsPrefix)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.leading)
-                    .frame(width: 140)
-
-                TextField("smb://server/share/path", text: $mapping.macPrefix)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.leading)
-
+                driveField
+                macField
                 removeButton
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
-                    TextField("A:", text: $mapping.windowsPrefix)
-                        .textFieldStyle(.roundedBorder)
-                        .multilineTextAlignment(.leading)
+                    driveField
                     removeButton
                 }
 
-                TextField("smb://server/share/path", text: $mapping.macPrefix)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.leading)
+                macField
             }
         }
         .controlSize(.small)
+    }
+
+    private var driveField: some View {
+        HStack(spacing: 6) {
+            TextField("A:", text: $mapping.windowsPrefix)
+                .textFieldStyle(.roundedBorder)
+                .multilineTextAlignment(.leading)
+                .frame(width: 140)
+
+            if !mapping.windowsPrefix.isEmpty && !isValidWindows {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .help("Enter a single letter (e.g., 'C' for C:\\)")
+            } else if isValidWindows {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .help("Valid drive letter")
+            }
+        }
+    }
+
+    private var macField: some View {
+        HStack(spacing: 6) {
+            TextField("smb://server/share/path", text: $mapping.macPrefix)
+                .textFieldStyle(.roundedBorder)
+                .multilineTextAlignment(.leading)
+
+            if !mapping.macPrefix.isEmpty && !isValidMac {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .help("Must start with / or smb://")
+            } else if isValidMac {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .help("Valid path")
+            }
+        }
     }
 
     private var removeButton: some View {
@@ -645,35 +686,70 @@ private struct SharePointMappingRow: View {
     @Binding var mapping: SharePointMapping
     var onRemove: () -> Void
 
+    private var isValidSharePoint: Bool {
+        PathMappingStore.isValidSharePointPrefix(mapping.sharePointPrefix)
+    }
+
+    private var isValidLocalRoot: Bool {
+        let trimmed = mapping.localRoot.trimmingCharacters(in: .whitespaces)
+        return trimmed.hasPrefix("/") || trimmed.hasPrefix("~")
+    }
+
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 12) {
-                TextField("/sites/team/Shared Documents", text: $mapping.sharePointPrefix)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.leading)
-                    .frame(minWidth: 240, idealWidth: 290)
-
-                TextField("/Users/you/Library/CloudStorage/...", text: $mapping.localRoot)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.leading)
-
+                sharePointField
+                localRootField
                 removeButton
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
-                    TextField("/sites/team/Shared Documents", text: $mapping.sharePointPrefix)
-                        .textFieldStyle(.roundedBorder)
-                        .multilineTextAlignment(.leading)
+                    sharePointField
                     removeButton
                 }
 
-                TextField("/Users/you/Library/CloudStorage/...", text: $mapping.localRoot)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.leading)
+                localRootField
             }
         }
         .controlSize(.small)
+    }
+
+    private var sharePointField: some View {
+        HStack(spacing: 6) {
+            TextField("/sites/team/Shared Documents", text: $mapping.sharePointPrefix)
+                .textFieldStyle(.roundedBorder)
+                .multilineTextAlignment(.leading)
+                .frame(minWidth: 240, idealWidth: 290)
+
+            if !mapping.sharePointPrefix.isEmpty && !isValidSharePoint {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .help("Should start with /sites/ or /teams/")
+            } else if isValidSharePoint {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .help("Valid SharePoint prefix")
+            }
+        }
+    }
+
+    private var localRootField: some View {
+        HStack(spacing: 6) {
+            TextField("/Users/you/Library/CloudStorage/...", text: $mapping.localRoot)
+                .textFieldStyle(.roundedBorder)
+                .multilineTextAlignment(.leading)
+
+            if !mapping.localRoot.isEmpty && !isValidLocalRoot {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .help("Must be an absolute path starting with /")
+            } else if isValidLocalRoot {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .help("Valid local path")
+            }
+        }
     }
 
     private var removeButton: some View {

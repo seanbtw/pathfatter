@@ -72,55 +72,62 @@ final class PathMappingStore: ObservableObject {
         self.history = Self.loadHistory()
     }
 
-    // MARK: - Debounced Saves
+    // MARK: - Debounced Saves (Thread-Safe)
 
     private func scheduleSave() {
         saveWorkItem?.cancel()
-
-        let work = DispatchWorkItem { [weak self] in
-            self?.performSave()
+        
+        // Snapshot the data to avoid race conditions
+        let mappingsSnapshot = mappings
+        
+        let work = DispatchWorkItem { [mappingsSnapshot] in
+            self.performSave(with: mappingsSnapshot)
         }
-
+        
         saveWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
-    private func performSave() {
-        let dto = mappings.map { PathMappingDTO(windowsPrefix: $0.windowsPrefix, macPrefix: $0.macPrefix) }
+    private func performSave(with mappingsSnapshot: [PathMapping]) {
+        let dto = mappingsSnapshot.map { PathMappingDTO(windowsPrefix: $0.windowsPrefix, macPrefix: $0.macPrefix) }
         guard let data = try? JSONEncoder().encode(dto) else { return }
         UserDefaults.standard.set(data, forKey: Self.storageKey)
     }
 
     private func scheduleSharePointSave() {
         sharePointSaveWorkItem?.cancel()
-
-        let work = DispatchWorkItem { [weak self] in
-            self?.performSharePointSave()
+        
+        let sharePointSnapshot = sharePointMappings
+        
+        let work = DispatchWorkItem { [sharePointSnapshot] in
+            self.performSharePointSave(with: sharePointSnapshot)
         }
-
+        
         sharePointSaveWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
-    private func performSharePointSave() {
-        let dto = sharePointMappings.map { SharePointMappingDTO(sharePointPrefix: $0.sharePointPrefix, localRoot: $0.localRoot) }
+    private func performSharePointSave(with sharePointSnapshot: [SharePointMapping]) {
+        let dto = sharePointSnapshot.map { SharePointMappingDTO(sharePointPrefix: $0.sharePointPrefix, localRoot: $0.localRoot) }
         guard let data = try? JSONEncoder().encode(dto) else { return }
         UserDefaults.standard.set(data, forKey: Self.sharePointStorageKey)
     }
 
     private func scheduleHistorySave() {
         historySaveWorkItem?.cancel()
-
-        let work = DispatchWorkItem { [weak self] in
-            self?.performHistorySave()
+        
+        let historySnapshot = history
+        
+        let work = DispatchWorkItem { [historySnapshot] in
+            self.performHistorySave(with: historySnapshot)
         }
-
+        
         historySaveWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
-    private func performHistorySave() {
-        guard let data = try? JSONEncoder().encode(history) else { return }
+    private func performHistorySave(with historySnapshot: [HistoryItem]) {
+        guard let data = try? JSONEncoder().encode(historySnapshot) else { return }
         UserDefaults.standard.set(data, forKey: Self.historyStorageKey)
     }
 
@@ -190,16 +197,20 @@ final class PathMappingStore: ObservableObject {
     // MARK: - History Management
 
     func recordHistory(input: String, output: String) {
+        let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedOutput.isEmpty else { return }
 
-        let normalized = trimmedOutput.lowercased()
-        history.removeAll { $0.output.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalized }
+        // Normalize both input and output for deduplication
+        let normalizedOutput = trimmedOutput.lowercased()
+        history.removeAll { 
+            $0.output.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalizedOutput 
+        }
 
         let canOpen = trimmedOutput.hasPrefix("/") || trimmedOutput.lowercased().hasPrefix("smb://")
         let item = HistoryItem(
             id: UUID(),
-            input: input.trimmingCharacters(in: .whitespacesAndNewlines),
+            input: trimmedInput,
             output: trimmedOutput,
             timestamp: Date(),
             canOpen: canOpen
@@ -319,29 +330,52 @@ final class PathMappingStore: ObservableObject {
         }
     }
 
-    // MARK: - Default Mappings
+    // MARK: - Default Mappings (Generic, not workplace-specific)
 
     static func defaultMappings() -> [PathMapping] {
-        [
-            PathMapping(id: UUID(), windowsPrefix: "A:\\", macPrefix: "smb://10.20.1.10/LON_WFG_VDI_Data/Data"),
-            PathMapping(id: UUID(), windowsPrefix: "G:\\", macPrefix: "smb://10.20.1.10/LON_WFG_VDI_Data/Graphics"),
-            PathMapping(id: UUID(), windowsPrefix: "K:\\", macPrefix: "smb://10.20.1.10/LON_WFG_VDI_Data/Modus Jobs"),
-            PathMapping(id: UUID(), windowsPrefix: "L:\\", macPrefix: "smb://10.20.1.10/LON_WFG_VDI_Data_Archive"),
-            PathMapping(id: UUID(), windowsPrefix: "M:\\", macPrefix: "smb://10.20.1.10/LON_WFG_VDI_Data/MYTR"),
-            PathMapping(id: UUID(), windowsPrefix: "V:\\", macPrefix: "smb://10.20.1.10/LON_WFG_RenderData")
-        ]
+        // Start with empty mappings - users configure their own
+        []
     }
 
     static func defaultSharePointMappings() -> [SharePointMapping] {
+        // Try to detect OneDrive automatically
         let home = NSHomeDirectory()
-        let localRoot = "\(home)/Library/CloudStorage/OneDrive-WorkplaceFuturesGroupLimited/Mytr Team - Documents"
-        return [
-            SharePointMapping(
-                id: UUID(),
-                sharePointPrefix: "/sites/MytrTeam2/Shared Documents",
-                localRoot: localRoot
-            )
+        let possibleOneDrivePaths = [
+            "\(home)/Library/CloudStorage/OneDrive-Personal",
+            "\(home)/Library/CloudStorage/OneDrive-*",
+            "\(home)/OneDrive",
         ]
+        
+        for path in possibleOneDrivePaths {
+            // Handle wildcard
+            if path.contains("*") {
+                let prefix = path.replacingOccurrences(of: "/*", with: "")
+                if let enumerator = FileManager.default.enumerator(at: URL(fileURLWithPath: prefix), includingPropertiesForKeys: [.isDirectoryKey]) {
+                    for case let fileURL as URL in enumerator {
+                        if fileURL.hasDirectoryPath && fileURL.lastPathComponent.contains("OneDrive") {
+                            return [
+                                SharePointMapping(
+                                    id: UUID(),
+                                    sharePointPrefix: "/sites/YourTeam/Shared Documents",
+                                    localRoot: fileURL.path
+                                )
+                            ]
+                        }
+                    }
+                }
+            } else if FileManager.default.fileExists(atPath: path) {
+                return [
+                    SharePointMapping(
+                        id: UUID(),
+                        sharePointPrefix: "/sites/YourTeam/Shared Documents",
+                        localRoot: path
+                    )
+                ]
+            }
+        }
+        
+        // No OneDrive found - start empty
+        return []
     }
 
     // MARK: - Import/Export
@@ -356,6 +390,23 @@ final class PathMappingStore: ObservableObject {
         let dto = mappings.map { PathMappingDTO(windowsPrefix: $0.windowsPrefix, macPrefix: $0.macPrefix) }
         let data = try JSONEncoder().encode(dto)
         try data.write(to: url, options: [.atomic])
+    }
+    
+    // MARK: - Validation Helpers
+    
+    static func isValidWindowsPrefix(_ prefix: String) -> Bool {
+        let trimmed = prefix.trimmingCharacters(in: .whitespaces)
+        return trimmed.count == 1 && trimmed.first?.isASCII == true && trimmed.first?.isLetter == true
+    }
+    
+    static func isValidMacPrefix(_ prefix: String) -> Bool {
+        let trimmed = prefix.trimmingCharacters(in: .whitespaces)
+        return trimmed.hasPrefix("/") || trimmed.hasPrefix("smb://")
+    }
+    
+    static func isValidSharePointPrefix(_ prefix: String) -> Bool {
+        let trimmed = prefix.trimmingCharacters(in: .whitespaces)
+        return trimmed.hasPrefix("/sites/") || trimmed.hasPrefix("/teams/") || trimmed.hasPrefix("/")
     }
 }
 

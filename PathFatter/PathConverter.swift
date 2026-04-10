@@ -83,18 +83,34 @@ struct PathConverter {
     }
 
     static func isWindowsPath(_ input: String) -> Bool {
-        if input.hasPrefix("\\\\") { return true }
-        if input.contains("\\") { return true }
-        if input.count >= 2 {
-            let chars = Array(input)
-            if chars[1] == ":" { return true }
+        let trimmed = input.trimmingCharacters(in: .whitespaces)
+        
+        // UNC path (\\server\share or //server/share)
+        if trimmed.hasPrefix("\\\\") || trimmed.hasPrefix("//") { return true }
+        
+        // Drive letter (C:\, D:, etc.)
+        if trimmed.count >= 2 {
+            let chars = Array(trimmed)
+            if chars[0].isASCII && chars[0].isLetter && chars[1] == ":" { return true }
         }
+        
+        // Backslash path (even forward-slash variants)
+        if trimmed.contains("\\") { return true }
+        
         return false
     }
 
     static func isSharePointURL(_ input: String) -> Bool {
-        guard let url = URL(string: input), let host = url.host?.lowercased() else { return false }
-        return host.contains("sharepoint.com")
+        guard let url = URL(string: input),
+              let scheme = url.scheme?.lowercased(),
+              (scheme == "http" || scheme == "https"),
+              let host = url.host?.lowercased() else { return false }
+        
+        // Microsoft SharePoint Online
+        if host.hasSuffix(".sharepoint.com") { return true }
+        
+        // Custom SharePoint domains can be added here if needed
+        return false
     }
 
     private static func windowsToMac(_ input: String, context: ConversionContext) -> String {
@@ -102,9 +118,9 @@ struct PathConverter {
             return mappedDrive
         }
 
-        if input.hasPrefix("\\\\") {
-            let trimmed = String(input.dropFirst(2))
-            let parts = trimmed.split(separator: "\\", omittingEmptySubsequences: true)
+        if input.hasPrefix("\\\\") || input.hasPrefix("//") {
+            let prefixRemoved = input.hasPrefix("\\\\") ? String(input.dropFirst(2)) : String(input.dropFirst(2))
+            let parts = prefixRemoved.split(separator: CharacterSet(charactersIn: "\\/"), omittingEmptySubsequences: true)
             if parts.count >= 2 {
                 let server = parts[0]
                 let share = parts[1]

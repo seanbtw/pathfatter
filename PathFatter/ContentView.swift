@@ -277,10 +277,9 @@ private extension ContentView {
         let currentOutput = outputPath
         guard !currentOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
-        let work = DispatchWorkItem { [weak self, currentInput, currentOutput] in
-            guard let self,
-                  currentInput == self.inputPath,
-                  currentOutput == self.outputPath else { return }
+        // Capture only what we need to avoid retain cycles
+        let work = DispatchWorkItem { [currentInput, currentOutput, weak mappingStore] in
+            guard let mappingStore else { return }
             mappingStore.recordHistory(input: currentInput, output: currentOutput)
         }
 
@@ -306,19 +305,27 @@ private extension ContentView {
         }
 
         let fileURL = URL(fileURLWithPath: trimmed)
-        var isDirectory: ObjCBool = false
-
-        if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDirectory) {
-            if isDirectory.boolValue {
+        let fileManager = FileManager.default
+        
+        // Try to get attributes for better error handling
+        do {
+            let attrs = try fileManager.attributesOfItem(atPath: fileURL.path)
+            let isDirectory = attrs[.type] as? FileAttributeType == .typeDirectory
+            
+            if isDirectory {
                 NSWorkspace.shared.open(fileURL)
             } else {
                 NSWorkspace.shared.activateFileViewerSelecting([fileURL])
             }
             return
-        }
-
-        if let existingParent = nearestExistingParent(for: fileURL) {
-            NSWorkspace.shared.open(existingParent)
+        } catch {
+            // Path doesn't exist or no permissions - try parent
+            if let existingParent = nearestExistingParent(for: fileURL) {
+                NSWorkspace.shared.open(existingParent)
+            } else {
+                // Show error to user
+                mappingStore.browserIntegrationLastEvent = "Path not found: \(trimmed)"
+            }
         }
     }
 
