@@ -506,9 +506,7 @@ private extension SettingsView {
         NSPasteboard.general.setString(Self.safariBookmarklet, forType: .string)
 
         didCopyBookmarklet = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-            self?.didCopyBookmarklet = false
-        }
+        // State will reset when view is dismissed or recreated
     }
 
     static var safariBookmarklet: String {
