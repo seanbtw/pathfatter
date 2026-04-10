@@ -163,46 +163,50 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { proxy in
             let profile = LayoutProfile(size: proxy.size, dynamicTypeSize: dynamicTypeSize)
-
-            ZStack {
-                // Animated background with gradient orbs
-                backgroundLayer
-                    .accessibilityHidden(true)
-                    .ignoresSafeArea()
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    HStack(alignment: .top, spacing: profile.gap) {
-                        VStack(alignment: .leading, spacing: profile.gap) {
-                            header(profile: profile)
-                            cards(profile: profile)
-
-                            if isHistoryVisible && !profile.showSideHistory {
-                                historyCard(maxHeight: profile.inlineHistoryHeight)
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                            }
-
-                            footerRow
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        if isHistoryVisible && profile.showSideHistory {
-                            historyCard(maxHeight: profile.sideHistoryHeight)
-                                .frame(width: profile.historyWidth)
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                    .padding(profile.outerPadding)
-                    .frame(minHeight: max(0, proxy.size.height - (profile.outerPadding * 2)), alignment: .top)
-                }
-                .scrollDisabled(isHoveringHistoryPanel)
-            }
+            mainContent(profile: profile, windowSize: proxy.size)
         }
         .background(WindowConfigurator(minSize: NSSize(width: 640, height: 480)))
         .onAppear {
             refreshConversionContext()
             recomputeOutput(animated: false)
             startBackgroundAnimation()
+        }
+    }
+    
+    @ViewBuilder
+    private func mainContent(profile: LayoutProfile, windowSize: CGSize) -> some View {
+        ZStack {
+            // Animated background with gradient orbs
+            backgroundLayer
+                .accessibilityHidden(true)
+                .ignoresSafeArea()
+
+            ScrollView(.vertical, showsIndicators: true) {
+                HStack(alignment: .top, spacing: profile.gap) {
+                    VStack(alignment: .leading, spacing: profile.gap) {
+                        header(profile: profile)
+                        cards(profile: profile)
+
+                        if isHistoryVisible && !profile.showSideHistory {
+                            historyCard(maxHeight: profile.inlineHistoryHeight)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+
+                        footerRow
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if isHistoryVisible && profile.showSideHistory {
+                        historyCard(maxHeight: profile.sideHistoryHeight)
+                            .frame(width: profile.historyWidth)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(profile.outerPadding)
+                .frame(minHeight: max(0, windowSize.height - (profile.outerPadding * 2)), alignment: .top)
+            }
+            .scrollDisabled(isHoveringHistoryPanel)
         }
         // Drag and drop support
         .onDrop(of: [.fileURL, .URL], isTargeted: nil) { providers in
@@ -236,6 +240,7 @@ struct ContentView: View {
                 isHoveringHistoryPanel = false
             }
         }
+    }
         // Keyboard shortcuts
         .onKeyPress("c", modifiers: .command) {
             if !outputPath.isEmpty {
@@ -639,16 +644,7 @@ private extension ContentView {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("PathFatter")
                         .font(.system(size: profile.titleSize, weight: .bold, design: .rounded))
-                        .foregroundColor(
-                            LinearGradient(
-                                colors: [
-                                    dynamicAccentColor,
-                                    dynamicAccentColor.opacity(0.7)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .foregroundColor(dynamicAccentColor)
                         .tracking(-0.5)
 
                     Text("Instantly translate Windows and macOS paths")
