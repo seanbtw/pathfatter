@@ -163,47 +163,42 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { proxy in
             let profile = LayoutProfile(size: proxy.size, dynamicTypeSize: dynamicTypeSize)
-            contentView(profile: profile, windowSize: proxy.size)
+
+            ZStack {
+                // Animated background with gradient orbs
+                backgroundLayer
+                    .accessibilityHidden(true)
+                    .ignoresSafeArea()
+
+                ScrollView(.vertical, showsIndicators: true) {
+                    HStack(alignment: .top, spacing: profile.gap) {
+                        VStack(alignment: .leading, spacing: profile.gap) {
+                            header(profile: profile)
+                            cards(profile: profile)
+
+                            if isHistoryVisible && !profile.showSideHistory {
+                                historyCard(maxHeight: profile.inlineHistoryHeight)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+
+                            footerRow
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        if isHistoryVisible && profile.showSideHistory {
+                            historyCard(maxHeight: profile.sideHistoryHeight)
+                                .frame(width: profile.historyWidth)
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    .padding(profile.outerPadding)
+                    .frame(minHeight: max(0, proxy.size.height - (profile.outerPadding * 2)), alignment: .top)
+                }
+                .scrollDisabled(isHoveringHistoryPanel)
+            }
         }
         .background(WindowConfigurator(minSize: NSSize(width: 640, height: 480)))
-    }
-    
-    @ViewBuilder
-    private func contentView(profile: LayoutProfile, windowSize: CGSize) -> some View {
-        ZStack {
-            // Animated background with gradient orbs
-            backgroundLayer
-                .accessibilityHidden(true)
-                .ignoresSafeArea()
-
-            ScrollView(.vertical, showsIndicators: true) {
-                HStack(alignment: .top, spacing: profile.gap) {
-                    VStack(alignment: .leading, spacing: profile.gap) {
-                        header(profile: profile)
-                        cards(profile: profile)
-
-                        if isHistoryVisible && !profile.showSideHistory {
-                            historyCard(maxHeight: profile.inlineHistoryHeight)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-
-                        footerRow
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    if isHistoryVisible && profile.showSideHistory {
-                        historyCard(maxHeight: profile.sideHistoryHeight)
-                            .frame(width: profile.historyWidth)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .topLeading)
-                .padding(profile.outerPadding)
-                .frame(minHeight: max(0, windowSize.height - (profile.outerPadding * 2)), alignment: .top)
-            }
-            .scrollDisabled(isHoveringHistoryPanel)
-        }
-    }
         .onAppear {
             refreshConversionContext()
             recomputeOutput(animated: false)
@@ -355,7 +350,6 @@ struct ContentView: View {
                 cardScale = 1.0
             }
         }
-        // didCopy will reset on next conversion or view refresh
     }
 
     private func handlePendingBrowserActions(using converted: String) {
@@ -503,7 +497,7 @@ struct ContentView: View {
         for provider in providers {
             if provider.canLoadObject(ofClass: URL.self) {
                 _ = provider.loadObject(ofClass: URL.self) { url, _ in
-                    DispatchQueue.main.async { [url] in
+                    DispatchQueue.main.async {
                         if let url = url {
                             inputPath = url.path
                         }
@@ -645,7 +639,16 @@ private extension ContentView {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("PathFatter")
                         .font(.system(size: profile.titleSize, weight: .bold, design: .rounded))
-                        .foregroundColor(dynamicAccentColor)
+                        .foregroundColor(
+                            LinearGradient(
+                                colors: [
+                                    dynamicAccentColor,
+                                    dynamicAccentColor.opacity(0.7)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
                         .tracking(-0.5)
 
                     Text("Instantly translate Windows and macOS paths")
