@@ -1,0 +1,63 @@
+:root {
+  color-scheme: light dark;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 300px;
+  background: transparent;
+}
+
+main {
+  padding: 14px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+}
+
+#url-status {
+  margin-bottom: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  user-select: none;
+}
+
+button {
+  appearance: none;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 620;
+  cursor: pointer;
+  background: linear-gradient(135deg, #4f8fff, #2d6df8);
+  color: #fff;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+#result {
+  margin-top: 10px;
+  min-height: 16px;
+}

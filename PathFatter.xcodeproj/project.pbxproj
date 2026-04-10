@@ -1,0 +1,503 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9A1E3E7F2F3B4C5D00000020 /* PathFatterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000010 /* PathFatterApp.swift */; };
+		9A1E3E7F2F3B4C5D00000021 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000011 /* ContentView.swift */; };
+		9A1E3E7F2F3B4C5D00000022 /* PathConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000012 /* PathConverter.swift */; };
+		9A1E3E7F2F3B4C5D00000023 /* PathMappingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000013 /* PathMappingStore.swift */; };
+		9A1E3E7F2F3B4C5D00000024 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000014 /* SettingsView.swift */; };
+		9A1E3E7F2F3B4C5D00000170 /* BrowserIntegrationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000171 /* BrowserIntegrationHelper.swift */; };
+		9A1E3E7F2F3B4C5D00000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000015 /* Assets.xcassets */; };
+		9A1E3E7F2F3B4C5D00000026 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000017 /* Preview Assets.xcassets */; };
+		9A1E3E7F2F3B4C5D00000120 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000100 /* SafariWebExtensionHandler.swift */; };
+		9A1E3E7F2F3B4C5D00000121 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000102 /* manifest.json */; };
+		9A1E3E7F2F3B4C5D00000122 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000103 /* background.js */; };
+		9A1E3E7F2F3B4C5D00000123 /* popup.html in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000104 /* popup.html */; };
+		9A1E3E7F2F3B4C5D00000124 /* popup.js in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000105 /* popup.js */; };
+		9A1E3E7F2F3B4C5D00000125 /* popup.css in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000106 /* popup.css */; };
+		9A1E3E7F2F3B4C5D00000126 /* PathFatterWebExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000109 /* PathFatterWebExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9A1E3E7F2F3B4C5D00000160 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9A1E3E7F2F3B4C5D00000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A1E3E7F2F3B4C5D00000140;
+			remoteInfo = PathFatterWebExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9A1E3E7F2F3B4C5D00000133 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9A1E3E7F2F3B4C5D00000126 /* PathFatterWebExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		9A1E3E7F2F3B4C5D0000000E /* PathFatter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = PathFatter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A1E3E7F2F3B4C5D00000010 /* PathFatterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathFatterApp.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000011 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000012 /* PathConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathConverter.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000013 /* PathMappingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathMappingStore.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000014 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000171 /* BrowserIntegrationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserIntegrationHelper.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000017 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000100 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000102 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000103 /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = background.js; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000104 /* popup.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = popup.html; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000105 /* popup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = popup.js; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000106 /* popup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = popup.css; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000109 /* PathFatterWebExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = PathFatterWebExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9A1E3E7F2F3B4C5D00000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A1E3E7F2F3B4C5D00000132 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9A1E3E7F2F3B4C5D00000002 = {
+			isa = PBXGroup;
+			children = (
+				9A1E3E7F2F3B4C5D00000018 /* PathFatter */,
+				9A1E3E7F2F3B4C5D00000107 /* PathFatterSafariWebExtension */,
+				9A1E3E7F2F3B4C5D00000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9A1E3E7F2F3B4C5D00000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9A1E3E7F2F3B4C5D0000000E /* PathFatter.app */,
+				9A1E3E7F2F3B4C5D00000109 /* PathFatterWebExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9A1E3E7F2F3B4C5D00000018 /* PathFatter */ = {
+			isa = PBXGroup;
+			children = (
+				9A1E3E7F2F3B4C5D00000010 /* PathFatterApp.swift */,
+				9A1E3E7F2F3B4C5D00000011 /* ContentView.swift */,
+				9A1E3E7F2F3B4C5D00000012 /* PathConverter.swift */,
+				9A1E3E7F2F3B4C5D00000013 /* PathMappingStore.swift */,
+				9A1E3E7F2F3B4C5D00000171 /* BrowserIntegrationHelper.swift */,
+				9A1E3E7F2F3B4C5D00000014 /* SettingsView.swift */,
+				9A1E3E7F2F3B4C5D00000015 /* Assets.xcassets */,
+				9A1E3E7F2F3B4C5D00000019 /* Preview Content */,
+			);
+			path = PathFatter;
+			sourceTree = "<group>";
+		};
+		9A1E3E7F2F3B4C5D00000019 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				9A1E3E7F2F3B4C5D00000017 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		9A1E3E7F2F3B4C5D00000107 /* PathFatterSafariWebExtension */ = {
+			isa = PBXGroup;
+			children = (
+				9A1E3E7F2F3B4C5D00000100 /* SafariWebExtensionHandler.swift */,
+				9A1E3E7F2F3B4C5D00000108 /* Resources */,
+			);
+			path = PathFatterSafariWebExtension;
+			sourceTree = "<group>";
+		};
+		9A1E3E7F2F3B4C5D00000108 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9A1E3E7F2F3B4C5D00000102 /* manifest.json */,
+				9A1E3E7F2F3B4C5D00000103 /* background.js */,
+				9A1E3E7F2F3B4C5D00000104 /* popup.html */,
+				9A1E3E7F2F3B4C5D00000105 /* popup.js */,
+				9A1E3E7F2F3B4C5D00000106 /* popup.css */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9A1E3E7F2F3B4C5D00000004 /* PathFatter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A1E3E7F2F3B4C5D00000009 /* Build configuration list for PBXNativeTarget "PathFatter" */;
+			buildPhases = (
+				9A1E3E7F2F3B4C5D00000005 /* Sources */,
+				9A1E3E7F2F3B4C5D00000006 /* Resources */,
+				9A1E3E7F2F3B4C5D00000007 /* Frameworks */,
+				9A1E3E7F2F3B4C5D00000133 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9A1E3E7F2F3B4C5D00000161 /* PBXTargetDependency */,
+			);
+			name = PathFatter;
+			productName = PathFatter;
+			productReference = 9A1E3E7F2F3B4C5D0000000E /* PathFatter.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9A1E3E7F2F3B4C5D00000140 /* PathFatterWebExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A1E3E7F2F3B4C5D00000150 /* Build configuration list for PBXNativeTarget "PathFatterWebExtension" */;
+			buildPhases = (
+				9A1E3E7F2F3B4C5D00000130 /* Sources */,
+				9A1E3E7F2F3B4C5D00000131 /* Resources */,
+				9A1E3E7F2F3B4C5D00000132 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PathFatterWebExtension;
+			productName = PathFatterWebExtension;
+			productReference = 9A1E3E7F2F3B4C5D00000109 /* PathFatterWebExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9A1E3E7F2F3B4C5D00000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					9A1E3E7F2F3B4C5D00000004 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					9A1E3E7F2F3B4C5D00000140 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 9A1E3E7F2F3B4C5D00000008 /* Build configuration list for PBXProject "PathFatter" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9A1E3E7F2F3B4C5D00000002;
+			productRefGroup = 9A1E3E7F2F3B4C5D00000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9A1E3E7F2F3B4C5D00000004 /* PathFatter */,
+				9A1E3E7F2F3B4C5D00000140 /* PathFatterWebExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9A1E3E7F2F3B4C5D00000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A1E3E7F2F3B4C5D00000025 /* Assets.xcassets in Resources */,
+				9A1E3E7F2F3B4C5D00000026 /* Preview Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A1E3E7F2F3B4C5D00000131 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A1E3E7F2F3B4C5D00000121 /* manifest.json in Resources */,
+				9A1E3E7F2F3B4C5D00000122 /* background.js in Resources */,
+				9A1E3E7F2F3B4C5D00000123 /* popup.html in Resources */,
+				9A1E3E7F2F3B4C5D00000124 /* popup.js in Resources */,
+				9A1E3E7F2F3B4C5D00000125 /* popup.css in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9A1E3E7F2F3B4C5D00000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A1E3E7F2F3B4C5D00000020 /* PathFatterApp.swift in Sources */,
+				9A1E3E7F2F3B4C5D00000021 /* ContentView.swift in Sources */,
+				9A1E3E7F2F3B4C5D00000022 /* PathConverter.swift in Sources */,
+				9A1E3E7F2F3B4C5D00000023 /* PathMappingStore.swift in Sources */,
+				9A1E3E7F2F3B4C5D00000170 /* BrowserIntegrationHelper.swift in Sources */,
+				9A1E3E7F2F3B4C5D00000024 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A1E3E7F2F3B4C5D00000130 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A1E3E7F2F3B4C5D00000120 /* SafariWebExtensionHandler.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9A1E3E7F2F3B4C5D00000161 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A1E3E7F2F3B4C5D00000140 /* PathFatterWebExtension */;
+			targetProxy = 9A1E3E7F2F3B4C5D00000160 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9A1E3E7F2F3B4C5D0000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9A1E3E7F2F3B4C5D0000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		9A1E3E7F2F3B4C5D0000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PathFatter;
+				INFOPLIST_KEY_CFBundleIdentifier = com.sean.pathfatter;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.sean.pathfatter\";\n    CFBundleURLSchemes =     (\n        pathfatter\n    );\n}";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter;
+				PRODUCT_NAME = PathFatter;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9A1E3E7F2F3B4C5D0000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PathFatter;
+				INFOPLIST_KEY_CFBundleIdentifier = com.sean.pathfatter;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.sean.pathfatter\";\n    CFBundleURLSchemes =     (\n        pathfatter\n    );\n}";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter;
+				PRODUCT_NAME = PathFatter;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9A1E3E7F2F3B4C5D00000151 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PathFatterSafariWebExtension/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter.webextension;
+				PRODUCT_NAME = PathFatterWebExtension;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9A1E3E7F2F3B4C5D00000152 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PathFatterSafariWebExtension/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter.webextension;
+				PRODUCT_NAME = PathFatterWebExtension;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9A1E3E7F2F3B4C5D00000008 /* Build configuration list for PBXProject "PathFatter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A1E3E7F2F3B4C5D0000000A /* Debug */,
+				9A1E3E7F2F3B4C5D0000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A1E3E7F2F3B4C5D00000009 /* Build configuration list for PBXNativeTarget "PathFatter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A1E3E7F2F3B4C5D0000000C /* Debug */,
+				9A1E3E7F2F3B4C5D0000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A1E3E7F2F3B4C5D00000150 /* Build configuration list for PBXNativeTarget "PathFatterWebExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A1E3E7F2F3B4C5D00000151 /* Debug */,
+				9A1E3E7F2F3B4C5D00000152 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9A1E3E7F2F3B4C5D00000001 /* Project object */;
+}

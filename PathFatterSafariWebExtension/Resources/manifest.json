@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "PathFatter",
+  "version": "1.0.0",
+  "description": "Send SharePoint URLs to PathFatter for conversion and opening in Finder.",
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.sharepoint.com/*"
+  ],
+  "action": {
+    "default_title": "Open in PathFatter",
+    "default_popup": "popup.html"
+  }
+}

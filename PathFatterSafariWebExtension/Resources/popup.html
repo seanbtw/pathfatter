@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PathFatter</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>PathFatter</h1>
+      <p id="url-status">Checking current tab...</p>
+
+      <label class="toggle-row">
+        <input id="copy-toggle" type="checkbox" />
+        <span>Copy converted path</span>
+      </label>
+
+      <button id="open-button" type="button">Open in PathFatter</button>
+      <p id="result" aria-live="polite"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
