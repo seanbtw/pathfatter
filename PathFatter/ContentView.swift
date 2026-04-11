@@ -128,8 +128,8 @@ struct ContentView: View {
             refreshConversionContext()
             recomputeOutput(animated: false)
         }
-        .onChange(of: mappingStore.incomingSharePointURL) { newValue in
-            guard let value = newValue, !value.isEmpty else { return }
+        .onChange(of: mappingStore.incomingSharePointURL) { _ in
+            guard let value = mappingStore.incomingSharePointURL, !value.isEmpty else { return }
             let behavior = mappingStore.consumeIncomingBrowserPreferences()
             pendingBrowserOpenFinder = behavior.openFinder
             pendingBrowserCopyOutput = behavior.copyPath
@@ -139,8 +139,8 @@ struct ContentView: View {
         .onChange(of: outputPath) { _ in
             scheduleHistoryCommit()
         }
-        .onChange(of: isHistoryVisible) { newValue in
-            if !newValue {
+        .onChange(of: isHistoryVisible) { _ in
+            if !isHistoryVisible {
                 isHoveringHistoryPanel = false
             }
         }
