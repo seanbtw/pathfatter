@@ -405,7 +405,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PathFatter/PathFatter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
@@ -413,7 +415,9 @@
 				INFOPLIST_KEY_CFBundleIdentifier = com.sean.pathfatter;
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.sean.pathfatter\";\n    CFBundleURLSchemes =     (\n        pathfatter\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = "1.0";
 				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter;
 				PRODUCT_NAME = PathFatter;
 				SWIFT_VERSION = 5.0;
@@ -424,7 +428,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PathFatter/PathFatter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
@@ -432,7 +438,9 @@
 				INFOPLIST_KEY_CFBundleIdentifier = com.sean.pathfatter;
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.sean.pathfatter\";\n    CFBundleURLSchemes =     (\n        pathfatter\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = "1.0";
 				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter;
 				PRODUCT_NAME = PathFatter;
 				SWIFT_VERSION = 5.0;
