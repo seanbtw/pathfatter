@@ -13,6 +13,7 @@
 		9A1E3E7F2F3B4C5D00000023 /* PathMappingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000013 /* PathMappingStore.swift */; };
 		9A1E3E7F2F3B4C5D00000024 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000014 /* SettingsView.swift */; };
 		9A1E3E7F2F3B4C5D00000170 /* BrowserIntegrationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000171 /* BrowserIntegrationHelper.swift */; };
+		9A1E3E7F2F3B4C5D00000173 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000172 /* OnboardingView.swift */; };
 		9A1E3E7F2F3B4C5D00000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000015 /* Assets.xcassets */; };
 		9A1E3E7F2F3B4C5D00000026 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000017 /* Preview Assets.xcassets */; };
 		9A1E3E7F2F3B4C5D00000120 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E3E7F2F3B4C5D00000100 /* SafariWebExtensionHandler.swift */; };
@@ -56,6 +57,7 @@
 		9A1E3E7F2F3B4C5D00000013 /* PathMappingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathMappingStore.swift; sourceTree = "<group>"; };
 		9A1E3E7F2F3B4C5D00000014 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9A1E3E7F2F3B4C5D00000171 /* BrowserIntegrationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserIntegrationHelper.swift; sourceTree = "<group>"; };
+		9A1E3E7F2F3B4C5D00000172 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		9A1E3E7F2F3B4C5D00000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9A1E3E7F2F3B4C5D00000017 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		9A1E3E7F2F3B4C5D00000100 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				9A1E3E7F2F3B4C5D00000013 /* PathMappingStore.swift */,
 				9A1E3E7F2F3B4C5D00000171 /* BrowserIntegrationHelper.swift */,
 				9A1E3E7F2F3B4C5D00000014 /* SettingsView.swift */,
+				9A1E3E7F2F3B4C5D00000172 /* OnboardingView.swift */,
 				9A1E3E7F2F3B4C5D00000015 /* Assets.xcassets */,
 				9A1E3E7F2F3B4C5D00000019 /* Preview Content */,
 			);
@@ -258,6 +261,7 @@
 				9A1E3E7F2F3B4C5D00000023 /* PathMappingStore.swift in Sources */,
 				9A1E3E7F2F3B4C5D00000170 /* BrowserIntegrationHelper.swift in Sources */,
 				9A1E3E7F2F3B4C5D00000024 /* SettingsView.swift in Sources */,
+				9A1E3E7F2F3B4C5D00000173 /* OnboardingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
