@@ -117,18 +117,18 @@ struct ContentView: View {
             _ = handleDrop(providers: providers)
             return true
         }
-        .onChange(of: inputPath) { _ in
+        .onChange(of: inputPath) {
             recomputeOutput(animated: true)
         }
-        .onChange(of: mappingStore.mappings) { _ in
+        .onChange(of: mappingStore.mappings) {
             refreshConversionContext()
             recomputeOutput(animated: false)
         }
-        .onChange(of: mappingStore.sharePointMappings) { _ in
+        .onChange(of: mappingStore.sharePointMappings) {
             refreshConversionContext()
             recomputeOutput(animated: false)
         }
-        .onChange(of: mappingStore.incomingSharePointURL) { _ in
+        .onChange(of: mappingStore.incomingSharePointURL) {
             guard let value = mappingStore.incomingSharePointURL, !value.isEmpty else { return }
             let behavior = mappingStore.consumeIncomingBrowserPreferences()
             pendingBrowserOpenFinder = behavior.openFinder
@@ -136,10 +136,10 @@ struct ContentView: View {
             inputPath = value
             mappingStore.incomingSharePointURL = nil
         }
-        .onChange(of: outputPath) { _ in
+        .onChange(of: outputPath) {
             scheduleHistoryCommit()
         }
-        .onChange(of: isHistoryVisible) { _ in
+        .onChange(of: isHistoryVisible) {
             if !isHistoryVisible {
                 isHoveringHistoryPanel = false
             }

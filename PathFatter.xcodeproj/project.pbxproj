@@ -336,7 +336,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -391,7 +391,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -413,7 +413,7 @@
 				INFOPLIST_KEY_CFBundleIdentifier = com.sean.pathfatter;
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.sean.pathfatter\";\n    CFBundleURLSchemes =     (\n        pathfatter\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter;
 				PRODUCT_NAME = PathFatter;
 				SWIFT_VERSION = 5.0;
@@ -432,7 +432,7 @@
 				INFOPLIST_KEY_CFBundleIdentifier = com.sean.pathfatter;
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.sean.pathfatter\";\n    CFBundleURLSchemes =     (\n        pathfatter\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter;
 				PRODUCT_NAME = PathFatter;
 				SWIFT_VERSION = 5.0;
@@ -447,7 +447,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PathFatterSafariWebExtension/Info.plist;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter.webextension;
 				PRODUCT_NAME = PathFatterWebExtension;
 				SKIP_INSTALL = YES;
@@ -463,7 +463,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PathFatterSafariWebExtension/Info.plist;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sean.pathfatter.webextension;
 				PRODUCT_NAME = PathFatterWebExtension;
 				SKIP_INSTALL = YES;
