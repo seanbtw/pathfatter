@@ -1,0 +1,43 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode_16.0.app/Contents/Developer
+    
+    - name: Show Xcode version
+      run: xcodebuild -version
+    
+    - name: Clean Build
+      run: |
+        xcodebuild -project PathFatter.xcodeproj \
+          -scheme PathFatter \
+          -configuration Release \
+          clean
+    
+    - name: Build Release
+      run: |
+        xcodebuild -project PathFatter.xcodeproj \
+          -scheme PathFatter \
+          -configuration Release \
+          build
+    
+    - name: Verify Build
+      run: |
+        if [ -d "build/Release/PathFatter.app" ]; then
+          echo "✅ Build succeeded"
+        else
+          echo "❌ Build failed - app not found"
+          exit 1
+        fi
