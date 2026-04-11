@@ -2,11 +2,12 @@
 
 **Beautiful, instant path conversion for macOS**
 
-PathFatter is a modern macOS app that instantly converts Windows and SharePoint paths to macOS equivalents (and vice versa). Built with SwiftUI, featuring stunning glassmorphism UI, smart animations, and complete accessibility support.
+[![Build](https://github.com/seanbtw/pathfatter/actions/workflows/build.yml/badge.svg)](https://github.com/seanbtw/pathfatter/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![macOS](https://img.shields.io/badge/macOS-14.0+-blue)](https://www.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-5.9+-orange)](https://swift.org)
 
-![macOS](https://img.shields.io/badge/macOS-13.0+-blue)
-![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-Native-red)
+PathFatter is a modern macOS app that instantly converts Windows and SharePoint paths to macOS equivalents (and vice versa). Built with SwiftUI, featuring stunning glassmorphism UI, smart animations, and complete accessibility support.
 
 ---
 
@@ -46,14 +47,41 @@ PathFatter is a modern macOS app that instantly converts Windows and SharePoint 
 
 ---
 
+## 📥 Installation
+
+### Option 1: Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/seanbtw/pathfatter.git
+cd pathfatter
+
+# Open in Xcode
+open PathFatter.xcodeproj
+
+# Build and run (⌘R)
+```
+
+**Requirements:**
+- macOS 14.0 or later
+- Xcode 15.0 or later
+
+### Option 2: App Store (Coming Soon)
+
+PathFatter will be available on the Mac App Store. Stay tuned!
+
+### Option 3: Direct Download (Coming Soon)
+
+Signed and notarized releases will be available on the [Releases page](https://github.com/seanbtw/pathfatter/releases).
+
+---
+
 ## 🚀 Quick Start
 
-### Build & Run
-
-1. Open `PathFatter/PathFatter.xcodeproj` in Xcode
-2. Build and run (⌘R)
-3. Complete the 4-step onboarding
-4. Start converting paths!
+1. **Open the project** in Xcode
+2. **Build and Run** (⌘R)
+3. **Complete onboarding** (4 quick slides)
+4. **Start converting paths!**
 
 ### First Launch
 
@@ -170,19 +198,25 @@ Every interaction feels responsive:
 
 ```
 PathFatter/
-├── PathFatter.xcodeproj          # Xcode project
-├── PathFatter/                   # Main app source
-│   ├── PathFatterApp.swift       # App entry point with onboarding
-│   ├── ContentView.swift         # Main UI with all improvements
-│   ├── SettingsView.swift        # Settings UI with validation
-│   ├── OnboardingView.swift      # First-launch onboarding carousel
-│   ├── PathConverter.swift       # Path conversion logic
-│   ├── PathMappingStore.swift    # State management with pinning
-│   └── BrowserIntegrationHelper.swift  # Safari extension helper
-├── PathFatterSafariWebExtension/ # Safari extension source
-├── README.md                     # This file
-├── ANALYSIS.md                   # Code analysis & recommendations
-└── UI_IMPROVEMENTS.md            # Detailed UI transformation docs
+├── .github/
+│   └── workflows/
+│       └── build.yml          # GitHub Actions CI
+├── PathFatter.xcodeproj       # Xcode project
+├── PathFatter/                # Main app source
+│   ├── PathFatterApp.swift    # App entry point
+│   ├── ContentView.swift      # Main UI
+│   ├── SettingsView.swift     # Settings UI
+│   ├── OnboardingView.swift   # First-launch onboarding
+│   ├── PathConverter.swift    # Conversion logic
+│   ├── PathMappingStore.swift # State management
+│   ├── BrowserIntegrationHelper.swift
+│   └── Assets.xcassets        # App icons and assets
+├── PathFatterSafariWebExtension/
+├── README.md                  # This file
+├── LICENSE                    # MIT License
+├── CHANGELOG.md               # Version history
+├── PRIVACY_POLICY.md          # Privacy policy
+└── PRODUCTION_READINESS.md    # Distribution guide
 ```
 
 ---
@@ -190,7 +224,7 @@ PathFatter/
 ## 🔧 Technical Details
 
 ### Requirements
-- macOS 13.0+
+- macOS 14.0+
 - Xcode 15.0+
 - Swift 5.9+
 
@@ -245,7 +279,7 @@ PathFatter/
 
 ## 📝 License
 
-MIT License - feel free to use, modify, and distribute.
+MIT License - feel free to use, modify, and distribute. See [LICENSE](LICENSE) for details.
 
 ---
 
@@ -262,6 +296,20 @@ Design inspiration from:
 
 ## 📬 Contact
 
+- **GitHub:** https://github.com/seanbtw/pathfatter
+- **Issues:** https://github.com/seanbtw/pathfatter/issues
+- **Privacy Policy:** [PRIVACY_POLICY.md](PRIVACY_POLICY.md)
+
 Built with ❤️ using SwiftUI
 
-For issues, suggestions, or contributions, open a GitHub issue.
+---
+
+## 🗺️ Roadmap
+
+- [ ] Mac App Store release
+- [ ] Direct download (DMG) with notarization
+- [ ] iOS/iPadOS version
+- [ ] Sync mappings via iCloud
+- [ ] Batch path conversion
+- [ ] Custom themes
+- [ ] Menu bar quick access
