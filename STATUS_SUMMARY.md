@@ -25,8 +25,16 @@
 - ✅ Added **export-options.plist** (Developer ID)
 - ✅ Updated **README.md** with badges, installation, roadmap
 - ✅ Created **PRODUCTION_READINESS.md** (comprehensive guide)
-- ✅ Pushed **4 commits** to main branch
+- ✅ Pushed **7 commits** to main branch
 - ✅ Created **v1.0.0-prep tag**
+
+### App Store Assets ✅
+- ✅ **Screenshots captured** - 7 total:
+  - 13" display: 4 screenshots (main, history, settings, drive mappings)
+  - 15" display: 2 screenshots (main, settings)
+  - Onboarding: 1 bonus screenshot
+- ✅ Exceeds App Store minimum requirements
+- ✅ Located in `screenshots/` folder
 
 ### Documentation ✅
 - ✅ Complete README with features, usage, shortcuts
@@ -35,6 +43,7 @@
 - ✅ Changelog with initial release notes
 - ✅ Production readiness checklist
 - ✅ Build instructions
+- ✅ Screenshot upload guide
 
 ---
 
@@ -77,13 +86,6 @@ DEVELOPMENT_TEAM = "YOUR_TEAM_ID";  // e.g., "8XYZ123ABC"
    - App Name: PathFatter
    - SKU: `pathfatter-mac-001`
 
-### Screenshots - **REQUIRED for App Store**
-**Need:** 
-- 13" display (1440x900) - minimum 1, recommend 3-5
-- 15" display (1680x1050) - minimum 1, recommend 3-5
-
-**Action:** Take screenshots of the app running, upload to App Store Connect
-
 ### Privacy Policy URL - **REQUIRED for App Store**
 **Options:**
 - Host `PRIVACY_POLICY.md` on GitHub Pages
@@ -107,11 +109,11 @@ DEVELOPMENT_TEAM = "YOUR_TEAM_ID";  // e.g., "8XYZ123ABC"
 | **Code Signing** | ⚠️ Blocked | Needs Team ID |
 | **Entitlements** | ✅ Ready | App Sandbox configured |
 | **App Icons** | ✅ Ready | All 10 sizes present |
-| **GitHub** | ✅ Ready | 4 commits, tag pushed |
+| **GitHub** | ✅ Ready | 7 commits, tag pushed |
 | **CI/CD** | ✅ Ready | GitHub Actions configured |
 | **Documentation** | ✅ Ready | All files complete |
+| **Screenshots** | ✅ Ready | 7 captured, exceeds requirements |
 | **App Store Connect** | 🚫 Blocked | Needs developer account |
-| **Screenshots** | 🚫 Blocked | Need to capture |
 | **Privacy Policy URL** | 🚫 Blocked | Need to host |
 
 ---
@@ -122,16 +124,16 @@ DEVELOPMENT_TEAM = "YOUR_TEAM_ID";  // e.g., "8XYZ123ABC"
 1. **Enroll in Apple Developer Program** ($99)
 2. **Update Team ID** in Xcode project
 3. **Create App Store Connect record**
-4. **Capture screenshots** (13" and 15")
-5. **Host privacy policy** (GitHub Pages or website)
+4. **Host privacy policy** (GitHub Pages or website)
 
 ### Before Submission
-6. **Fix light mode issues** (from ANALYSIS.md) - optional but recommended
-7. **Test on clean macOS install** - verify no issues
-8. **Prepare metadata** (description, keywords, support URL)
-9. **Complete age rating questionnaire**
+5. **Fix light mode issues** (from ANALYSIS.md) - optional but recommended
+6. **Test on clean macOS install** - verify no issues
+7. **Prepare metadata** (description, keywords, support URL)
+8. **Complete age rating questionnaire**
 
 ### Submission Day
+9. **Upload screenshots** to App Store Connect (already captured!)
 10. **Archive build** in Xcode (Product → Archive)
 11. **Upload to App Store Connect**
 12. **Fill in all metadata**
@@ -153,7 +155,7 @@ Use this when ready to submit:
 - [ ] Team ID configured in project
 - [ ] App Store Connect record created
 - [ ] Bundle ID matches (`com.sean.pathfatter`)
-- [ ] Screenshots uploaded (13" + 15")
+- [ ] **Screenshots uploaded** (13" + 15") ✅ READY
 - [ ] App icon uploaded (512x512)
 - [ ] Metadata complete:
   - [ ] Subtitle (30 chars)
@@ -197,6 +199,7 @@ These would improve the app but aren't required for launch:
 - `HEARTBEAT.md` - Current task tracking
 - `export-options.plist` - Export configuration
 - `PathFatter/PathFatter.entitlements` - App Sandbox
+- `screenshots/README.md` - Screenshot upload guide
 
 ### GitHub
 - Repository: https://github.com/seanbtw/pathfatter
@@ -207,14 +210,21 @@ These would improve the app but aren't required for launch:
 
 ## 🎉 Summary
 
-**PathFatter is 85% production-ready!**
+**PathFatter is 90% production-ready!**
 
-Everything technical is complete. The remaining 15% is administrative:
-- Apple Developer Program enrollment
+Everything technical and creative is complete:
+- ✅ Code configured and building
+- ✅ All documentation written
+- ✅ **Screenshots captured and ready**
+- ✅ GitHub repository polished
+- ✅ CI/CD pipeline active
+
+The remaining 10% is administrative:
+- Apple Developer Program enrollment ($99)
 - App Store Connect setup
-- Screenshots and metadata
+- Privacy policy URL hosting
 
-Once you complete those, we can submit to the App Store within hours.
+Once you complete those, we can submit to the App Store within hours!
 
 **Great work!** 🚀
 
