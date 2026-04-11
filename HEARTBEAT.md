@@ -16,36 +16,40 @@
 - Added privacy policy template
 - Added CHANGELOG.md
 - Added export-options.plist for Developer ID
-- **Pushed to GitHub** - 2 commits + v1.0.0-prep tag
+- **Pushed to GitHub** - 6 commits + v1.0.0-prep tag
+- **Captured App Store screenshots** - 7 total (4x 13", 2x 15", 1x onboarding)
+- Added CONTRIBUTING.md
+- Updated README.md with badges, installation, roadmap
+- Added SCREENSHOT_INSTRUCTIONS.md
+- Added capture_screenshots.applescript
 
 ## Next Tasks 📋
 
 ### High Priority
 1. **Fix ANALYSIS.md issues** - Light mode support, memory leak prevention
 2. **Update git identity** - Configure proper name/email for commits
-3. **Create v1.0 tag** - After App Store submission
+3. **Create v1.0.0 tag** - After App Store submission
 
 ### Medium Priority
 4. **Add unit tests** - Basic PathConverter tests
-5. **Add README badges** - Build status, version, etc.
-6. **Create CONTRIBUTING.md** - For community contributions
+5. **Add README badges** - Link to screenshots, etc.
 
 ### Blocked (Needs User Input) 🚫
 - Apple Developer Program enrollment ($99/year)
 - App Store Connect app record creation
 - Code signing Team ID configuration (update `DEVELOPMENT_TEAM` in project)
-- Screenshots for App Store Connect (13" and 15" displays)
 - Privacy policy URL hosting (can use GitHub Pages)
 
 ## Current Status
 **Build:** ✅ Succeeds  
 **Icons:** ✅ Complete (all sizes)  
+**Screenshots:** ✅ Complete (7 total, exceeds requirements)  
 **Signing:** ⚠️ Needs Team ID  
 **Notarization:** ⚠️ Not configured (not needed for App Store)  
-**GitHub:** ✅ Pushed with tag  
+**GitHub:** ✅ Pushed (6 commits + tag)  
 **App Store:** 🚫 Needs developer account  
 **CI/CD:** ✅ GitHub Actions configured
 
 ---
 
-**Work autonomously on unblocked items. Flag blocked items clearly.**
+**Ready for App Store submission once Developer Program enrollment is complete!**
