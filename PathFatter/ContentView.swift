@@ -163,135 +163,50 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { proxy in
             let profile = LayoutProfile(size: proxy.size, dynamicTypeSize: dynamicTypeSize)
+            let height = proxy.size.height
             
-            ZStack {
+            let scrollContent = ScrollView(.vertical, showsIndicators: true) {
+                HStack(alignment: .top, spacing: profile.gap) {
+                    VStack(alignment: .leading, spacing: profile.gap) {
+                        header(profile: profile)
+                        cards(profile: profile)
+                        
+                        if isHistoryVisible && !profile.showSideHistory {
+                            historyCard(maxHeight: profile.inlineHistoryHeight)
+                                .transition(.asymmetric(
+                                    insertion: .opacity.combined(with: .move(edge: .top)),
+                                    removal: .opacity
+                                ))
+                        }
+                        
+                        footerRow
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    if isHistoryVisible && profile.showSideHistory {
+                        historyCard(maxHeight: profile.sideHistoryHeight)
+                            .frame(width: profile.historyWidth)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(profile.outerPadding)
+                .frame(minHeight: max(0, height - (profile.outerPadding * 2)), alignment: .top)
+            }
+            .scrollDisabled(isHoveringHistoryPanel)
+            
+            return ZStack {
                 backgroundLayer
                     .accessibilityHidden(true)
                     .ignoresSafeArea()
                 
-                mainScrollView(profile: profile, height: proxy.size.height)
+                scrollContent
             }
         }
         .background(WindowConfigurator(minSize: NSSize(width: 640, height: 480)))
-    }
-    
-    private func mainScrollView(profile: LayoutProfile, height: CGFloat) -> some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            HStack(alignment: .top, spacing: profile.gap) {
-                VStack(alignment: .leading, spacing: profile.gap) {
-                    header(profile: profile)
-                    cards(profile: profile)
-                    
-                    if isHistoryVisible && !profile.showSideHistory {
-                        historyCard(maxHeight: profile.inlineHistoryHeight)
-                            .transition(.asymmetric(
-                                insertion: .opacity.combined(with: .move(edge: .top)),
-                                removal: .opacity
-                            ))
-                    }
-                    
-                    footerRow
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                if isHistoryVisible && profile.showSideHistory {
-                    historyCard(maxHeight: profile.sideHistoryHeight)
-                        .frame(width: profile.historyWidth)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .opacity
-                        ))
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-            .padding(profile.outerPadding)
-            .frame(minHeight: max(0, height - (profile.outerPadding * 2)), alignment: .top)
-        }
-        .scrollDisabled(isHoveringHistoryPanel)
-        .onAppear {
-            refreshConversionContext()
-            recomputeOutput(animated: false)
-            startBackgroundAnimation()
-        }
-        .onDrop(of: [.fileURL, .URL], isTargeted: nil) { providers in
-            handleDrop(providers: providers)
-            return true
-        }
-        .onChange(of: inputPath) { _, _ in
-            recomputeOutput(animated: true)
-        }
-        .onChange(of: mappingStore.mappings) { _, _ in
-            refreshConversionContext()
-            recomputeOutput(animated: false)
-        }
-        .onChange(of: mappingStore.sharePointMappings) { _, _ in
-            refreshConversionContext()
-            recomputeOutput(animated: false)
-        }
-        .onChange(of: mappingStore.incomingSharePointURL) { _, newValue in
-            guard let value = newValue, !value.isEmpty else { return }
-            let behavior = mappingStore.consumeIncomingBrowserPreferences()
-            pendingBrowserOpenFinder = behavior.openFinder
-            pendingBrowserCopyOutput = behavior.copyPath
-            inputPath = value
-            mappingStore.incomingSharePointURL = nil
-        }
-        .onChange(of: outputPath) { _, _ in
-            scheduleHistoryCommit()
-        }
-        .onChange(of: isHistoryVisible) { _, newValue in
-            if !newValue {
-                isHoveringHistoryPanel = false
-            }
-        }
-        .onKeyPress("c", modifiers: .command) {
-            if !outputPath.isEmpty {
-                copyToPasteboard(outputPath)
-                triggerCopySuccess()
-                return .handled
-            }
-            return .ignored
-        }
-        .onKeyPress("o", modifiers: .command) {
-            if canOpenOutputInFinder {
-                openConvertedPath()
-                return .handled
-            }
-            return .ignored
-        }
-        .onKeyPress("s", modifiers: .command) {
-            if !outputPath.isEmpty {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    inputPath = outputPath
-                }
-                return .handled
-            }
-            return .ignored
-        }
-        .onKeyPress(.escape) {
-            if !inputPath.isEmpty {
-                inputPath = ""
-                return .handled
-            }
-            return .ignored
-        }
-        .onKeyPress(.downArrow) {
-            navigateHistory(direction: 1)
-            return .handled
-        }
-        .onKeyPress(.upArrow) {
-            navigateHistory(direction: -1)
-            return .handled
-        }
-        .onKeyPress(.return) {
-            if let selected = selectedHistoryItem, !outputPath.isEmpty {
-                copyToPasteboard(outputPath)
-                triggerCopySuccess()
-                return .handled
-            }
-            return .ignored
-        }
-    }
         .onAppear {
             refreshConversionContext()
             recomputeOutput(animated: false)
